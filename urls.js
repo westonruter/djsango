@@ -7,7 +7,7 @@ Djsango._initializers.push(function(){
 			regexp = new RegExp(regexp);
 		return this.push([regexp, view]);
 	};
-	this.isHashSynchronized = true;
+	//this.isHashSynchronized = true;
 });
 
 
@@ -34,6 +34,7 @@ Djsango.prototype.navigate = function(hash, replace){
 	
 	// Update window location
 	if(hash != existingHash){
+		onhashchange.suppressCount++;
 		if(replace)
 			window.location.replace("#!" + hash);
 		else
@@ -70,6 +71,12 @@ var supportsOnHashChange = false;
 var hashchangeTimerID;
 var previousHash;
 function onhashchange(e){
+	//Prevent this hashchange handler if suppress
+	if(onhashchange.suppressCount > 0){
+		onhashchange.suppressCount--;
+		return;
+	}
+	
 	//Defer to native hashchange event
 	if(!e)
 		e = window.event;
@@ -86,16 +93,18 @@ function onhashchange(e){
 	
 	//TODO
 }
+onhashchange.suppressCount = 0;
 
 
-Djsango.prototype.watchLocation = function(){
-	this.isHashSynchronized = true;
-	previousHash = window.location.hash;
-	
-};
+//Djsango.prototype.watchLocation = function(){
+//	this.isHashSynchronized = true;
+//	previousHash = window.location.hash;
+//	
+//};
+//
+//Djsango.prototype.unwatchLocation = function(){
+//	this.isHashSynchronized = false;
+//	window.clearInterval(hashchangeTimerID);
+//	hashchangeTimerID = null;
+//};
 
-Djsango.prototype.unwatchLocation = function(){
-	this.isHashSynchronized = false;
-	window.clearInterval(hashchangeTimerID);
-	hashchangeTimerID = null;
-};

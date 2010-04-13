@@ -1,5 +1,5 @@
 /*!
- * Yes, this project has an awesome name. It's Django but for JavaScript.
+ * Yes, this project has an awesome name. It's Django but for JavaScript frontend applications.
  * MIT/GPL license.
  */
 
