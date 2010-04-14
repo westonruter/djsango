@@ -66,6 +66,13 @@ Djsango.prototype.dispatchEvent = function(event, target){
 		event.target = target;
 	}
 	
+	if(event.type.indexOf('before_event') != 0 && event.type.indexOf('after_event') != 0){
+		if(!this.dispatchEvent('before_event', event))
+			return false;
+		if(!this.dispatchEvent('before_event_' + event.type, event))
+			return false;
+	}
+	
 	// Invoke each of the event handlers with the event object,
 	// each which can preventDefault, or modify the event target
 	// (akin to WordPress filters).
@@ -94,6 +101,12 @@ Djsango.prototype.dispatchEvent = function(event, target){
 			}
 		}
 	}
+	
+	if(event.type.indexOf('before_event') != 0 && event.type.indexOf('after_event') != 0){
+		this.dispatchEvent('after_event_' + event.type, event);
+		this.dispatchEvent('after_event', event);
+	}
+	
 	return !event.defaultPrevented;
 };
 

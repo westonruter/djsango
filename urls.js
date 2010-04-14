@@ -114,6 +114,7 @@ Djsango.prototype.navigate = function(hash, replace){
 			if(!this.dispatchEvent(event))
 				return false;
 			try {
+				//Should anything be done with the return value?
 				url[1].call(this, matches);
 			}
 			catch(error){
