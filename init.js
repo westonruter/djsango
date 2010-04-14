@@ -16,6 +16,8 @@ function Djsango(name){
 	Djsango._initializers.forEach(function(init){
 		init.apply(this);
 	}, this);
+	
+	this.dispatchEvent('construct');
 };
 Djsango.prototype.toString = function(){
 	return "Djsango<" + this.name + ">";
@@ -33,8 +35,8 @@ Djsango._initializers = [];
  * Load the initial view based on the location.hash and
  * get everything going!
  */
-Djsango.prototype.start = function(){
-	this.dispatchEvent('start');
+Djsango.prototype.init = function(){
+	this.dispatchEvent('init');
 	this.navigate();
 };
 

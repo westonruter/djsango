@@ -51,7 +51,7 @@ Djsango._initializers.push(function(){
 	this._onhashchange.previousHash = window.location.hash;
 	
 	// Start watching for hashchange events
-	this.addEventListener('start', function(e){
+	this.addEventListener('init', function(e){
 		if(window.addEventListener){
 			window.addEventListener('hashchange', this._onhashchange, false);
 		}

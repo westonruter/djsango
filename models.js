@@ -2,7 +2,7 @@
  * Djsango Models
  */
 
-
+// http://impel.simulacre.org/
 
 //Djsango.prototype.createModel = function(name, properties, toString, valueOf){
 //	var app = this;
