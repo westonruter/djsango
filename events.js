@@ -20,6 +20,9 @@ Djsango.Event = function(type, target){
 	this.target = target;
 	this.defaultPrevented = false;
 };
+Djsango.Event.prototype.toString = function(){
+	return "DjsangoEvent<" + this.type + ">( " + this.target.toString() + " )";
+};
 
 
 /**
@@ -59,16 +62,35 @@ Djsango.prototype.dispatchEvent = function(event, target){
 		throw new Error("Event object missing 'type' property.");
 	}
 	
-	if(!event.target){
+	if(target !== undefined){
 		event.target = target;
 	}
 	
+	// Invoke each of the event handlers with the event object,
+	// each which can preventDefault, or modify the event target
+	// (akin to WordPress filters).
 	if(this._eventListeners[event.type] instanceof Array){
 		var listeners = this._eventListeners[event.type];
 		for (var i = 0, len = listeners.length; i < len; i++){
-			target = listeners[i].call(this, event, event.target);
-			if(target !== undefined){
-				event.target = target;
+			try {
+				target = listeners[i].call(this, event, event.target);
+				if(target !== undefined){
+					event.target = target;
+				}
+			}
+			catch(error){
+				// don't allow second exception to break things
+				if(event.type == 'error'){
+					setTimeout(function(){
+						throw error;
+					}, 0);
+				}
+				// try to notify the application of the error handler's error
+				else {
+					var errorEvent = new Djsango.Event('error', error);
+					errorEvent.originalEvent = event;
+					this.dispatchEvent('error', errorEvent);
+				}
 			}
 		}
 	}
