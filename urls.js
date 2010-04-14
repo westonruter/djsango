@@ -123,7 +123,7 @@ Djsango.prototype.navigate = function(url, replace){
 	// Find a view that matches the URL
 	for(var i = 0, len = this.urls.length; i < len; i++){
 		var urlObj = this.urls[i];
-		var matches = url.match(urlObj.pattern);
+		var matches = urlObj.match(url); // url.match(urlObj.pattern);
 		//var event = new Djsango.Event('navigate_url_matches', matches);
 		//if(!this.dispatchEvent(event))
 		//	return false;
