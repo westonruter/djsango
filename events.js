@@ -1,4 +1,6 @@
-
+/*!
+ * Djsango Events
+ */
 
 Djsango._initializers.push(function(){
 	this._eventListeners = {};
@@ -21,7 +23,7 @@ Djsango.Event = function(type, target){
 	this.defaultPrevented = false;
 };
 Djsango.Event.prototype.toString = function(){
-	return "DjsangoEvent<" + this.type + ">( " + this.target.toString() + " )";
+	return "Djsango.Event<" + this.type + ">( " + this.target.toString() + " )";
 };
 
 
