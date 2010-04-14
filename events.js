@@ -68,7 +68,8 @@ Djsango.prototype.dispatchEvent = function(event, target){
 		event.target = target;
 	}
 	
-	if(event.type.indexOf('before_event') != 0 && event.type.indexOf('after_event') != 0){
+	// Fire before events
+	if(!/^(before|after)_event/.test(event.type)){
 		if(!this.dispatchEvent('before_event', event))
 			return false;
 		if(!this.dispatchEvent('before_event_' + event.type, event))
@@ -104,7 +105,8 @@ Djsango.prototype.dispatchEvent = function(event, target){
 		}
 	}
 	
-	if(event.type.indexOf('before_event') != 0 && event.type.indexOf('after_event') != 0){
+	// Fire after events
+	if(!/^(before|after)_event/.test(event.type)){
 		this.dispatchEvent('after_event_' + event.type, event);
 		this.dispatchEvent('after_event', event);
 	}
