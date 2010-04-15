@@ -18,15 +18,17 @@ Function.prototype.bind = function(o) {
 
 
 var blogApp = new Djsango("Blog", [
-	[/^help/, function(){ console.info(this, 'HELP') }]
+	[/^help/, function(request){
+		console.info('HELP', this, request)
+	}]
 ]);
 
 blogApp.urlPatterns.add(/^$/, function(){
 	console.info(this, "INDEX")
 });
 
-blogApp.urlPatterns.add(/^post(?:\/(\d+))?$/, function(matches, queryParams){
-	console.info(this, "Post", matches)
+blogApp.urlPatterns.add(/^post(?:\/(\d+))?$/, function(request, postID){
+	console.info("Post", request, postID)
 });
 
 blogApp.urlPatterns.add(
@@ -49,6 +51,8 @@ Djsango.addEventListener('before_event', function(e){
 	}
 	
 })
+
+
 
 
 function viewAboutMe(matches){

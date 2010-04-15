@@ -5,6 +5,7 @@
 //if(!Djsango.Event)
 //	throw Error("Expected Djsango.Event");
 
+Djsango.fragmentSigil = "!";
 
 /**
  * Hash change handler; this will get called at least once
@@ -112,6 +113,11 @@ Djsango._URLPatternList = function(){
 
 Djsango._URLPatternList.prototype = new Array();
 Djsango._URLPatternList.prototype.app = null; //keep track of who we belong to
+
+
+/**
+ * Splice in either a single URL Pattern or multiple URL Patterns.
+ */
 Djsango._URLPatternList.prototype.add = function(/*...*/){
 	function add(pattern, /*app,*/ view, position){
 		//QUESTION: Should it always be a string like Django? And only get JIT compiled?
@@ -139,16 +145,8 @@ Djsango._URLPatternList.prototype.add = function(/*...*/){
 				arguments[i][0], //pattern
 				arguments[i][1], //view
 				arguments[i][2]  //position
-			)
+			);
 		}
-		//var that = this;
-		//Array.forEach.call(arguments, function(arg){
-		//	add.call(that,
-		//		arg[0], //pattern
-		//		arg[1], //view
-		//		arg[2]  //position
-		//	);
-		//});
 	}
 	// Only a single pattern set is passed in
 	else {
@@ -156,7 +154,7 @@ Djsango._URLPatternList.prototype.add = function(/*...*/){
 			arguments[0], //pattern
 			arguments[1], //view
 			arguments[2]  //position
-		)
+		);
 	}
 	
 };
@@ -187,7 +185,6 @@ Djsango._URLPatternList.prototype.include = function(basePattern, app, position)
  * This needs to return the URLPattern that matched as well as the matches
  */
 Djsango._URLPatternList.prototype.match = function(url){
-	//++callcount;
 	var matches;
 	for(var i = 0, len = this.length; i < len; i++){
 		var item = this[i];
@@ -249,7 +246,11 @@ Djsango._URLPatternList.prototype.match = function(url){
 
 Djsango.urlPatterns = new Djsango._URLPatternList();
 
-
+/**
+ * Request object similar to Django's; instead of GET, POST, REQUEST
+ * members being instances of QueryDict, there is only one member `queryDict`
+ * that has the GET parameters, as obviously POST isn't possible.
+ */
 Djsango._Request = function(url){
 	this.url = url;
 	var parsedUrl = url.match(/^(.*?)(?:\?(.*?))?(?:#(.*))?$/);
@@ -262,28 +263,40 @@ Djsango._Request = function(url){
 	
 	// Parse the query parameters
 	this.queryDict = {};
-	var queryPairs = this.query.split(/&/);
-	for(var i = 0; i < queryPairs.length; i++){
-		var queryPair = queryPairs[i].split(/=/, 2);
-		var key = decodeURIComponent(queryPair[0]);
-		var value = decodeURIComponent(queryPair[1]);
-		
-		// List value
-		if(key.substr(-2) == '[]'){
-			key = key.substr(0, key.length-2);
-			if(!this.queryDict[key])
-				this.queryDict[key] = [];
-			this.queryDict[key].push(value);
-		}
-		// Single value
-		else {
-			this.queryDict[key] = value;
+	if(this.query){
+		var queryPairs = this.query.split(/&/);
+		for(var i = 0; i < queryPairs.length; i++){
+			var queryPair = queryPairs[i].split(/=/, 2);
+			var key = decodeURIComponent(queryPair[0]);
+			var value = decodeURIComponent(queryPair[1]);
+			
+			// List value
+			if(key.substr(-2) == '[]'){
+				key = key.substr(0, key.length-2);
+				if(!this.queryDict[key])
+					this.queryDict[key] = [];
+				this.queryDict[key].push(value);
+			}
+			// Single value
+			else {
+				this.queryDict[key] = value;
+			}
 		}
 	}
 };
 Djsango._Request.prototype.toString = function(){
 	return "Djsango._Request<" + this.url + ">";
 };
+
+
+//TODO
+Djsango._Response = function(){
+	throw Error("NOT IMPLEMENTED");
+};
+
+
+
+
 //Djsango._Request.prototype.path = null;
 //Djsango._Request.prototype.query = null;
 //Djsango._Request.prototype.fragment = null;
@@ -297,6 +310,8 @@ Djsango._Request.prototype.toString = function(){
 //	//return url;
 //};
 
+Djsango._previousURL = null;
+
 /**
  * Load the view associated with the hash supplied; if empty, the
  * existing page's hash is used; otherwise, the history is changed
@@ -306,33 +321,34 @@ Djsango._Request.prototype.toString = function(){
  */
 Djsango.navigate = function(url, replace){
 	var context = this;
+	var existingHash = window.location.hash.replace(/^#/, '');
 	
-	// Strip out Ajax hash shebang
-	if(url)
-		url = url.replace(/.*#!/, '');
+	// Get existing url and use it if no argument url provided; strip out Ajax hash shebang (fragment sigil)
+	if(url === undefined && existingHash.substr(0, Djsango.fragmentSigil.length) == Djsango.fragmentSigil){
+		var wasURL = url;
+		url = existingHash.substr(Djsango.fragmentSigil.length);
+	}
 	
-	// Get existing url and use it if no argument url provided
-	var existingURL = '';
-	if(window.location.hash.indexOf('#!') == 0)
-		existingURL = window.location.hash.replace(/^#?!/, '');
-	if(url === undefined)
-		url = existingURL;
+	// If can't discern the URL, then just use empty string
+	if(!url)
+		url = '';
 	
 	// Fire navigate event so that plugins can modify the hash or
 	// abort the navigation completely
 	var event = new Djsango.Event('navigate', url);
-	event.previousTarget = existingURL;
+	event.previousTarget = Djsango._previousURL;
 	if(!this.dispatchEvent(event))
 		return false;
 	url = event.target;
 	
 	// Update window location if url isn't the existing one
-	if(url != existingURL){
-		onhashchange.suppressCount++;
+	var newLocationHash = '#' + Djsango.fragmentSigil + url;
+	if(arguments.length && newLocationHash != window.location.hash){
+		Djsango._onhashchange.suppressCount++;
 		if(replace)
-			window.location.replace("#!" + url);
+			window.location.replace(newLocationHash);
 		else
-			window.location.href = "#!" + url;
+			window.location.href = newLocationHash;
 	}
 	
 	var request = new Djsango._Request(url);
@@ -353,6 +369,7 @@ Djsango.navigate = function(url, replace){
 		
 		var event = new Djsango.Event('url_match', matches);
 		event.request = request;
+		//event.matches = matches;
 		event.pattern = pattern;
 		event.view = view;
 		if(!context.dispatchEvent(event))
@@ -362,7 +379,9 @@ Djsango.navigate = function(url, replace){
 		var success;
 		try {
 			// Dispatch the view
-			result = matches.urlPattern.view.call(context, request, matches);
+			var args = matches;
+			args[0] = request;
+			result = matches.urlPattern.view.apply(context, args);
 			success = true;
 			
 			// Fire view success event
@@ -397,10 +416,16 @@ Djsango.navigate = function(url, replace){
 		
 		return true; //return !(result instanceof Error);
 	}
-	var event = new Djsango.Event('url_fail', url);
-	context.dispatchEvent(event);
+	else {
+		var event = new Djsango.Event('url_fail', url);
+		context.dispatchEvent(event);
+	}
 	
+	Djsango._previousURL = url;
 	return false;
 };
 
 
+
+
+//TODO: Djsango.watchLocation(); Djsango.unwatchLocation();	
