@@ -10,9 +10,6 @@
 //});
 Djsango._eventListeners = {};
 
-//Djsango.prototype._initEvents = function(){
-//	this._eventListeners = {};
-//}
 
 /*!
  * Event handlers inspired in part by http://www.nczonline.net/blog/2010/03/09/custom-events-in-javascript/
@@ -60,7 +57,7 @@ Djsango.addEventListener = function(type, handler, index){
  * the event type and target passed in. Context is the application.
  * @returns {mixed} The target after potentially being modified by callbacks
  */
-Djsango.prototype.dispatchEvent = function(event, target){
+Djsango.dispatchEvent = Djsango.prototype.dispatchEvent = function(event, target){
 	if(typeof event == "string"){
 		event = new Djsango.Event(event);
 	}

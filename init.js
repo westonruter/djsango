@@ -12,24 +12,27 @@
 function Djsango(name){
 	this.name = name;
 	
+	this.urlPatterns = new Djsango._URLPatternList();
+	this.urlPatterns.app = this;
+	
 	// Initialize each of the modules
-	this._initializers.forEach(function(init){
-		init.apply(this);
-	}, this);
+	//this._constructors.forEach(function(init){
+	//	init.apply(this);
+	//}, this);
 	
 	this.dispatchEvent('construct');
+};
+Djsango.toString = function(){
+	return "Djsango";
 };
 Djsango.prototype.toString = function(){
 	return "Djsango<" + this.name + ">";
 };
 
-
 /**
- * Other Djsango components located in other .js files append functions
- * to this list which set up their respective functionalities.
+ * Additional functions from other modules that get called when instantiated
  */
-Djsango._initializers = [];
-Djsango.prototype._initializers = [];
+//Djsango.this._constructors = [];
 
 
 
@@ -41,22 +44,22 @@ Djsango.init = function(){
 	//this.dispatchEvent('init');
 	//Djsango.navigate();
 	
-	// Initialize each of the modules
+	// Initialize each of the modules (we probably don't need this?)
 	this._initializers.forEach(function(init){
 		init.apply(this);
 	}, this);
 	
 	//NOTE: When
 	
-	//NOW WE NEED TO START 
+	//NOW WE NEED TO START
+	this.dispatchEvent('init');
+	this.navigate();
+	
 };
 
-
 /**
- * Initializer 
+ * Other Djsango components located in other .js files append functions
+ * to this list which set up their respective functionalities.
  */
-//Djsango.prototype.init = function(){
-//	this.dispatchEvent('init');
-//	//this.navigate();
-//};
+Djsango._initializers = []; //We probably don't need this
 
