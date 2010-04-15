@@ -9,11 +9,14 @@
 /**
  * Django-style framework for client-side JavaScript web applications.
  */
-function Djsango(name){
+function Djsango(name, urlPatterns){
 	this.name = name;
 	
 	this.urlPatterns = new Djsango._URLPatternList();
 	this.urlPatterns.app = this;
+	if(urlPatterns){
+		this.urlPatterns.add.apply(this.urlPatterns, urlPatterns);
+	}
 	
 	// Initialize each of the modules
 	//this._constructors.forEach(function(init){
@@ -40,7 +43,7 @@ Djsango.prototype.toString = function(){
  * Load the initial view based on the location.hash and
  * get everything going!
  */
-Djsango.init = function(){
+Djsango.init = function(urlPatterns){
 	//this.dispatchEvent('init');
 	//Djsango.navigate();
 	
@@ -49,7 +52,9 @@ Djsango.init = function(){
 		init.apply(this);
 	}, this);
 	
-	//NOTE: When
+	if(urlPatterns){
+		this.urlPatterns.add.apply(this.urlPatterns, urlPatterns);
+	}
 	
 	//NOW WE NEED TO START
 	this.dispatchEvent('init');

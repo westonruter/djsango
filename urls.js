@@ -68,6 +68,7 @@ Djsango._URLPattern = function(pattern, /*app,*/ view){
 	//this.app = app;
 	this.view = view;
 };
+//Djsango._URLPattern.prototype.app = null;
 Djsango._URLPattern.prototype.toString = function(){
 	return "Djsango._URLPattern<" + this.pattern + ">";
 };
@@ -181,12 +182,12 @@ Djsango._URLPatternList.prototype.include = function(basePattern, app, position)
 };
 
 
-
 /**
  * 
  * This needs to return the URLPattern that matched as well as the matches
  */
 Djsango._URLPatternList.prototype.match = function(url){
+	//++callcount;
 	var matches;
 	for(var i = 0, len = this.length; i < len; i++){
 		var item = this[i];
@@ -194,6 +195,7 @@ Djsango._URLPatternList.prototype.match = function(url){
 			matches = item.match(url);
 			if(matches){
 				matches.urlPattern = item;
+				matches.app = this.app;
 			}
 		}
 		else if(item instanceof Djsango._URLPatternListInclusion){
@@ -211,8 +213,9 @@ Djsango._URLPatternList.prototype.match = function(url){
 			throw TypeError("Unexpected member in urlPatterns: " + this[i]);
 		}
 		
-		if(matches)
+		if(matches){
 			break;
+		}
 	}
 	
 	return matches;
@@ -247,6 +250,52 @@ Djsango._URLPatternList.prototype.match = function(url){
 Djsango.urlPatterns = new Djsango._URLPatternList();
 
 
+Djsango._Request = function(url){
+	this.url = url;
+	var parsedUrl = url.match(/^(.*?)(?:\?(.*?))?(?:#(.*))?$/);
+	if(!parsedUrl)
+		throw SyntaxError("Unable to parse URL: " + url);
+	
+	this.path = parsedUrl[1];
+	this.query = parsedUrl[2];
+	this.fragment = parsedUrl[3];
+	
+	// Parse the query parameters
+	this.queryDict = {};
+	var queryPairs = this.query.split(/&/);
+	for(var i = 0; i < queryPairs.length; i++){
+		var queryPair = queryPairs[i].split(/=/, 2);
+		var key = decodeURIComponent(queryPair[0]);
+		var value = decodeURIComponent(queryPair[1]);
+		
+		// List value
+		if(key.substr(-2) == '[]'){
+			key = key.substr(0, key.length-2);
+			if(!this.queryDict[key])
+				this.queryDict[key] = [];
+			this.queryDict[key].push(value);
+		}
+		// Single value
+		else {
+			this.queryDict[key] = value;
+		}
+	}
+};
+Djsango._Request.prototype.toString = function(){
+	return "Djsango._Request<" + this.url + ">";
+};
+//Djsango._Request.prototype.path = null;
+//Djsango._Request.prototype.query = null;
+//Djsango._Request.prototype.fragment = null;
+//Djsango._Request.prototype.toString = function(){
+//	return this.raw;
+//	//var url = this.path;
+//	//if(this.query)
+//	//	url += "?" + this.query;
+//	//if(this.fragment)
+//	//	url += "?" + this.fragment;
+//	//return url;
+//};
 
 /**
  * Load the view associated with the hash supplied; if empty, the
@@ -257,7 +306,6 @@ Djsango.urlPatterns = new Djsango._URLPatternList();
  */
 Djsango.navigate = function(url, replace){
 	var context = this;
-	//TODO: Strip out query parameters
 	
 	// Strip out Ajax hash shebang
 	if(url)
@@ -287,9 +335,11 @@ Djsango.navigate = function(url, replace){
 			window.location.href = "#!" + url;
 	}
 	
+	var request = new Djsango._Request(url);
+	
 	//NOTE: In order for this to work, the app needs to be tied to the view; currying?
 	
-	var matches = this.urlPatterns.match(url);
+	var matches = this.urlPatterns.match(request.path);
 	if(matches){
 		if(!(matches.urlPattern instanceof Djsango._URLPattern))
 			throw TypeError("Assertion fail");
@@ -297,12 +347,12 @@ Djsango.navigate = function(url, replace){
 		var view = matches.urlPattern.view;
 		
 		// Update the context for the view and events
-		if(matches.urlPattern.app){
-			context = matches.urlPattern.app;
+		if(matches.app){
+			context = matches.app;
 		}
 		
 		var event = new Djsango.Event('url_match', matches);
-		event.url = url;
+		event.request = request;
 		event.pattern = pattern;
 		event.view = view;
 		if(!context.dispatchEvent(event))
@@ -311,14 +361,14 @@ Djsango.navigate = function(url, replace){
 		var result;
 		var success;
 		try {
-			// Execute the view
-			result = matches.urlPattern.view.call(context, matches);
+			// Dispatch the view
+			result = matches.urlPattern.view.call(context, request, matches);
 			success = true;
 			
 			// Fire view success event
 			event = new Djsango.Event('view_success', result);
-			event.url = url;
-			event.urlMatches = matches;
+			event.request = request;
+			event.matches = matches;
 			event.pattern = pattern;
 			event.view = view;
 			context.dispatchEvent(event);
@@ -329,8 +379,8 @@ Djsango.navigate = function(url, replace){
 			
 			// Fire view error event
 			event = new Djsango.Event('view_error', error);
-			event.url = url;
-			event.urlMatches = matches
+			event.request = request;
+			event.matches = matches;
 			event.pattern = pattern;
 			event.view = view;
 			context.dispatchEvent(event);
@@ -338,8 +388,8 @@ Djsango.navigate = function(url, replace){
 		
 		// Fire view complete event
 		event = new Djsango.Event('view_complete', result);
-		event.url = url;
-		event.urlMatches = matches;
+		event.request = request;
+		event.matches = matches;
 		event.pattern = pattern;
 		event.view = view;
 		event.success = success;

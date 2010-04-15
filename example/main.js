@@ -17,12 +17,15 @@ Function.prototype.bind = function(o) {
 
 
 
-var blogApp = new Djsango("Blog");
+var blogApp = new Djsango("Blog", [
+	[/^help/, function(){ console.info(this, 'HELP') }]
+]);
+
 blogApp.urlPatterns.add(/^$/, function(){
 	console.info(this, "INDEX")
 });
 
-blogApp.urlPatterns.add(/^post(?:\/(\d+))?$/, function(matches){
+blogApp.urlPatterns.add(/^post(?:\/(\d+))?$/, function(matches, queryParams){
 	console.info(this, "Post", matches)
 });
 
@@ -68,6 +71,8 @@ Djsango.urlPatterns.include(/^blog/, blogApp);
 //Djsango.urls.add(/^entries\//, blogApp.views.viewEntries); //This will not work because it doesn't keep context
 
 console.info(Djsango.urlPatterns)
-Djsango.init(); //runs Djsango.navigate();
+Djsango.init([
+	[/^temp/, function(){ console.info(this, 'TEMP') }]
+]); //runs Djsango.navigate();
 
 //TODO: We need an event for 
