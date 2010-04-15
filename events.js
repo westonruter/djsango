@@ -1,11 +1,14 @@
 /*!
  * Djsango Events
+ *
+ * @todo Events need to be dispatched from Djsango, not from the instance: how can the instances listen to 
  */
 
-Djsango._initializers.push(function(){
-	this._eventListeners = {};
-});
-
+//Djsango._initializers.push(function(){
+//	//this._eventListeners = {};
+//	//TODO: This needs to actually be in the singleton
+//});
+Djsango._eventListeners = {};
 
 //Djsango.prototype._initEvents = function(){
 //	this._eventListeners = {};
@@ -40,7 +43,8 @@ Djsango.Event.prototype.preventDefault = function(){
  * handler should be called. By default it gets called in the order it was
  * added. Return value of a handler overwrites the event.target.
  */
-Djsango.prototype.addEventListener = function(type, handler, index){
+//Djsango.prototype.addEventListener =
+Djsango.addEventListener = function(type, handler, index){
 	if(!(this._eventListeners[type] instanceof Array))
 		this._eventListeners[type] = [];
 	var listeners = this._eventListeners[type];
@@ -79,8 +83,8 @@ Djsango.prototype.dispatchEvent = function(event, target){
 	// Invoke each of the event handlers with the event object,
 	// each which can preventDefault, or modify the event target
 	// (akin to WordPress filters).
-	if(this._eventListeners[event.type] instanceof Array){
-		var listeners = this._eventListeners[event.type];
+	if(Djsango._eventListeners[event.type] instanceof Array){
+		var listeners = Djsango._eventListeners[event.type];
 		for (var i = 0, len = listeners.length; i < len; i++){
 			try {
 				target = listeners[i].call(this, event, event.target);
@@ -118,7 +122,8 @@ Djsango.prototype.dispatchEvent = function(event, target){
 /**
  * Remove a previously assigned event callback
  */
-Djsango.prototype.removeEventListener = function(type, handler){
+//Djsango.prototype.removeEventListener
+Djsango.removeEventListener = function(type, handler){
 	if(this._eventListeners[type] instanceof Array){
 		var listeners = this._eventListeners[type];
 		for(var i = 0, len = listeners.length; i < len; i++){

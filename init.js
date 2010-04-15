@@ -13,7 +13,7 @@ function Djsango(name){
 	this.name = name;
 	
 	// Initialize each of the modules
-	Djsango._initializers.forEach(function(init){
+	this._initializers.forEach(function(init){
 		init.apply(this);
 	}, this);
 	
@@ -29,14 +29,34 @@ Djsango.prototype.toString = function(){
  * to this list which set up their respective functionalities.
  */
 Djsango._initializers = [];
+Djsango.prototype._initializers = [];
+
 
 
 /**
  * Load the initial view based on the location.hash and
  * get everything going!
  */
-Djsango.prototype.init = function(){
-	this.dispatchEvent('init');
-	this.navigate();
+Djsango.init = function(){
+	//this.dispatchEvent('init');
+	//Djsango.navigate();
+	
+	// Initialize each of the modules
+	this._initializers.forEach(function(init){
+		init.apply(this);
+	}, this);
+	
+	//NOTE: When
+	
+	//NOW WE NEED TO START 
 };
+
+
+/**
+ * Initializer 
+ */
+//Djsango.prototype.init = function(){
+//	this.dispatchEvent('init');
+//	//this.navigate();
+//};
 

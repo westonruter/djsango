@@ -2,24 +2,27 @@
  * Djsango URLs
  */
 
+if(!Djsango.Event)
+	throw Error("Expected Djsango.Event");
 
+/*
 Djsango._initializers.push(function(){
 	var that = this;	
 	
 	// Set up URLs
-	this.urls = [];
-	this.urls.add = function(pattern, view){
+	this.urlpatterns = [];
+	this.urlpatterns.add = function(pattern, view){
 		if(typeof pattern == 'string')
 			pattern = new RegExp(pattern);
-		return this.push(new Djsango.URL(pattern, view));
+		return this.push(new Djsango._URLPattern(pattern, view));
 	};
 	
 
-	/**
+	/ **
 	 * Hash change handler; this will get called at least once
 	 * @param {Object} e Event object if invoked as hashchange
 	 * @private
-	 */
+	 * /
 	this._onhashchange = function(e){
 		var onhashchange = that._onhashchange;
 		
@@ -64,20 +67,104 @@ Djsango._initializers.push(function(){
 		);
 	});
 });
+*/
+
+
+/**
+ * Hash change handler; this will get called at least once
+ * @param {Object} e Event object if invoked as hashchange
+ * @private
+ */
+Djsango._onhashchange = function(e){
+	var onhashchange = Djsango._onhashchange;
+	
+	//Prevent this hashchange handler if suppress
+	if(onhashchange.suppressCount > 0){
+		onhashchange.suppressCount--;
+		return;
+	}
+	
+	//Defer to native hashchange event
+	if(!e)
+		e = window.event;
+	if(onhashchange.intervalTimerID && e && e.type && e.type.indexOf('hashchange') != -1){
+		window.clearInterval(onhashchange.intervalTimerID);
+		onhashchange.intervalTimerID = null;
+	}
+	
+	//Stop if we've already handled this
+	if(onhashchange.previousHash == window.location.hash)
+		return;
+	//var thisPreviousHash = onhashchange.previousHash;
+	onhashchange.previousHash = window.location.hash;
+	
+	//Djsango.navigate(); //TODO!!!
+};
+Djsango._onhashchange.intervalTimerID = null;
+Djsango._onhashchange.intervalMS = 100;
+Djsango._onhashchange.suppressCount = 0;
+Djsango._onhashchange.previousHash = window.location.hash;
+
+
+// Start watching for hashchange events
+Djsango._initializers.push(function(e){
+	if(window.addEventListener){
+		window.addEventListener('hashchange', Djsango._onhashchange, false);
+	}
+	else if(window.attachEvent){
+		window.attachEvent('onhashchange', Djsango._onhashchange);
+	}
+	Djsango._onhashchange.intervalTimerID = window.setInterval(
+		Djsango._onhashchange,
+		Djsango._onhashchange.intervalMS
+	);
+});
+
+
+Djsango._URLPatterns = function(urlpatterns){
+	var that = this;
+	if(urlpatterns instanceof Array){
+		urls.forEach(function(urlpattern){
+			that.push(urlpattern);
+		});
+	}
+};
+Djsango._URLPatterns.prototype = new Array();
+Djsango._URLPatterns.prototype.add = function(pattern, view, position){
+	if(typeof regexp == 'string')
+		pattern = new RegExp(pattern);
+	//return this.push(new Djsango._URLPattern(regexp, view));
+	var urlpattern = new Djsango._URLPattern(pattern, view);
+	if(position === undefined)
+		position = this.length;
+	this.splice(position, 0, urlpattern);
+	return urlpattern;
+};
+
+//Djsango.urlpatterns = new Djsango._URLPatterns();
+
+
+
+//Djsango.urlpatterns = [];
+//Djsango.urlpatterns.add = function(pattern, view){
+//	if(typeof pattern == 'string')
+//		pattern = new RegExp(pattern);
+//	return this.push(new Djsango._URLPattern(pattern, view));
+//};
 
 
 /**
  * Djsango URL object which associates a pattern (RegExp) with a view (function)
  */
-Djsango.URL = function(pattern, view){
+Djsango._URLPattern = function(pattern, view){
 	this.pattern = pattern;
 	this.view = view;
 };
-Djsango.URL.prototype.toString = function(){
-	return "Djsango.URL<" + this.pattern + ">";
+Djsango._URLPattern.prototype.toString = function(){
+	return "Djsango._URLPattern<" + this.pattern + ">";
 };
 
-Djsango.URL.prototype.match = function(url){
+Djsango._URLPattern.prototype.match = function(url){
 	if(typeof url != "string")
 		throw Error("Expected 'url' to be a string.");
 	return url.match(this.pattern);
@@ -91,7 +178,7 @@ Djsango.URL.prototype.match = function(url){
  * @returns {boolean} True if navigation succeeded: event handlers
  *                    didn't prevent and a URL matched.
  */
-Djsango.prototype.navigate = function(url, replace){
+Djsango.navigate = function(url, replace){
 	// Strip out Ajax hash shebang
 	if(url)
 		url = url.replace(/.*#!/, '');
@@ -120,9 +207,11 @@ Djsango.prototype.navigate = function(url, replace){
 			window.location.href = "#!" + url;
 	}
 	
+	//NOTE: In order for this to work, the app needs to be tied to the view; currying?
+	
 	// Find a view that matches the URL
-	for(var i = 0, len = this.urls.length; i < len; i++){
-		var urlObj = this.urls[i];
+	for(var i = 0, len = this.urlpatterns.length; i < len; i++){
+		var urlObj = this.urlpatterns[i];
 		var matches = urlObj.match(url); // url.match(urlObj.pattern);
 		//var event = new Djsango.Event('navigate_url_matches', matches);
 		//if(!this.dispatchEvent(event))
