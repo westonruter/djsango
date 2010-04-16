@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!--#include file="head.html.inc"-->
+	</head>
+	<body>
+		<script>
+		test.expectedCount = 13;
+		
+		Djsango.urlPatterns.add(
+			[/^PATHNAME\/(\d\d\d\d)-(\d\d)-(\d\d)\/([a-z\-_]+)$/i, function(request, year, month, day, postname){
+				test.assert("year parameter parse", year === '2010');
+				test.assert("month parameter parsed", month === '05');
+				test.assert("day parameter parsed", day === '23');
+				test.assert("postname parameter parsed", postname === 'hello-world');
+				
+				//TODO: why does path not begin with a slash?
+				test.assert("request path verified", request.path == 'PaThNaMe/2010-05-23/hello-world');
+				test.assert("request query verified", request.query == 'single=first&mult[]=1&mult[]=2&last=one');
+				test.assert("request fragment verified", request.fragment == 'very-meta');
+				
+				test.assert("request queryDict is an object", request.queryDict instanceof Object);
+				test.assert("request queryDict.single==first", request.queryDict.single == 'first');
+				test.assert("request queryDict.last==one", request.queryDict.last == 'one');
+				test.assert("request queryDict.mult is Array", request.queryDict.mult instanceof Array);
+				test.assert("request queryDict.mult members are right", request.queryDict.mult[0] === '1' && request.queryDict.mult[1] === '2');
+				
+				Djsango.navigate("barepath");
+			}],
+			[/^barepath/, function(req){
+				test.assert("bareurl's request and view's arguments are barren",
+					arguments.length === 1 &&
+					req.path === "barepath" &&
+					!req.query && !req.fragment
+				)
+			}]
+		);
+		
+		Djsango.addEventListener('url_fail', function(e){
+			test.fail(e);
+		})
+		
+		Djsango.init("PaThNaMe/2010-05-23/hello-world?single=first&mult[]=1&mult[]=2&last=one#very-meta");
+		
+		</script>
+	</body>
+</html>

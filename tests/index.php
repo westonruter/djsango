@@ -18,6 +18,7 @@
 	li.run iframe {
 		display:block;
 		float:right;
+		visibility:hidden;
 		width:200px;
 		height:2em;
 		background-color:#DDD;
@@ -26,6 +27,7 @@
 	iframe {
 		display:none;
 		clear:right;
+		visibility:hidden;
 		/*position:fixed;*/
 		/*right:0;*/
 		/*top:0;*/
@@ -37,6 +39,7 @@
 		/*background:#DDD;*/
 	}
 	li:target iframe {
+		visibility:visible;
 		float:none;
 		margin-bottom:0.5em;
 		width:600px;
@@ -50,10 +53,16 @@
 		clear:both;
 		margin-top:1em;
 	}
+	#totalPass {
+		color:green;
+	}
+	#totalFail {
+		color:red;
+	}
 	</style>
 </head>
 <body>
-    <h1><a href="http://github.com/westonruter/djsango">Djsango</a> Tests</h1>
+    <h1><a href="http://github.com/westonruter/djsango">Djsango</a> Tests: <span id='totalPass'>0</span>/<span id='totalFail'>0</span></h1>
 	
 	<form action="./" method="get">
 		<button type=submit name="autorun" value="on">Run All</button>
@@ -107,10 +116,16 @@
 		asserts.appendChild(assert);
 	}
 	
+	var totalPass = 0;
 	function pass(testname, assertion){
+		totalPass++;
+		document.getElementById('totalPass').innerHTML = totalPass;
 		completetest(testname, assertion, true);
 	}
+	var totalFail = 0;
 	function fail(testname, assertion, error){
+		totalFail++;
+		document.getElementById('totalFail').innerHTML = totalPass;
 		completetest(testname, assertion, false, error);
 	}
 	//function pass(name, assertion){
