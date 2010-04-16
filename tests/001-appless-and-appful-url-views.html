@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>init1</title>
+		<!--#include file="head.html.inc"-->
+	</head>
+	<body>
+		<script>
+		test.expectedCount = 12;
+		test.finalCheckDelay = 200;
+		
+		//Test app-less URLs
+		Djsango.urlPatterns.add(
+			[/^$/, function(req){
+				test.pass("appless view 1, loaded via init->navigate()");
+				test.assert("appless view context is Django", this == Djsango)
+				Djsango.navigate("appless2");
+			}],
+			[/^appless2$/, function(req){
+				test.pass("appless view 2, loaded via navigate(...)");
+				self.location.href = "#!appless3";
+			}],
+			[/^appless3$/, function(req){
+				test.pass("appless view 3, loaded via location.hash = X");
+				Djsango.navigate("test/1");
+			}]
+		);
+		
+		//Test app-full URLs
+		var testApp = new Djsango("URL Tests", [
+			/^1/, function(){
+				test.pass("test app view 1");
+				test.assert("appful view context is instance of Django", this instanceof Djsango)
+				Djsango.navigate("test/2");
+			}
+		]);
+		testApp.urlPatterns.add(/^2/, function(){
+			test.pass("test app view 2");
+			location.href = "#!test/3";
+		});
+		testApp.urlPatterns.add(
+			[/^3/, function(){
+				test.pass("test app view 3");
+				Djsango.navigate("test/4");
+			}],
+			[/^4/, function(){
+				test.pass("test app view 4");
+				
+				//Now add new app URLs by position
+				testApp.urlPatterns.add(
+					/^position/,
+					function(req){ test.fail("App URL should not get found!") },
+					2
+				);
+				testApp.urlPatterns.add(
+					/^position/,
+					function(req){ test.pass("App Positioned URL properly found") },
+					1
+				);
+				
+				Djsango.navigate("test/position");
+				
+				//Now add appless URLs by position
+				Djsango.urlPatterns.add(
+					/^position/,
+					function(req){ test.fail("App-less URL should not get found!") },
+					2
+				);
+				Djsango.urlPatterns.add(
+					/^position/,
+					function(req){
+						test.pass("App-less Positioned URL properly found")
+						
+						//GOTO 2   :-)
+						Djsango.navigate("testapp2");
+					},
+					1
+					
+				);
+				Djsango.navigate("position");
+				
+				
+			}]
+		);
+		
+		//LABEL 2
+		var testApp2 = new Djsango("Test App Without Base Pattern");
+		testApp2.urlPatterns.add(
+			/^testapp2/, function(){
+				test.pass("Successful app url import without base pattern");
+			}
+		);
+		Djsango.urlPatterns.include('', testApp2);
+		
+		
+		
+		
+		
+		//Problem: what if we want to include witout a prefix?
+		Djsango.urlPatterns.include(/^test/, testApp);
+		
+		//Error handlers
+		var handleError = function(e){
+			test.fail(e.target || e);
+		};
+		self.onerror = handleError;
+		Djsango.addEventListener("view_error", handleError);
+		Djsango.addEventListener("error", handleError);
+		Djsango.addEventListener("url_fail", handleError);
+		
+		Djsango.init();
+		
+		</script>
+	</body>
+</html>

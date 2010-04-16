@@ -350,6 +350,7 @@ Djsango.navigate = function(url, replace){
 	if(!this.dispatchEvent(event))
 		return false;
 	url = event.target;
+	Djsango._previousURL = url;
 	
 	// Update window location if url isn't the existing one
 	var newLocationHash = '#' + Djsango.fragmentSigil + url;
@@ -364,6 +365,7 @@ Djsango.navigate = function(url, replace){
 	var request = new Djsango._Request(url);
 	
 	//NOTE: In order for this to work, the app needs to be tied to the view; currying?
+	
 	
 	var matches = this.urlPatterns.match(request.path);
 	if(matches){
@@ -431,8 +433,6 @@ Djsango.navigate = function(url, replace){
 		var event = new Djsango.Event('url_fail', url);
 		context.dispatchEvent(event);
 	}
-	
-	Djsango._previousURL = url;
 	return false;
 };
 

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>init2</title>
+		<!--#include file="head.html.inc"-->
+	</head>
+	<body>
+		<script>
+		test.expectedCount = 16;
+		
+		var testApp = new Djsango("EventTests");
+		
+		var sequence = [
+			function(){ Djsango.navigate("foo/1;2;3") },
+			function(){ Djsango.navigate("notfound") },
+			function(){ Djsango.navigate("viewerror") },
+			function(){ Djsango.navigate("viewsuccess") }
+		]
+		
+		// 0 url_success
+		Djsango.urlPatterns.add(/^$/, function(req){
+			(sequence.shift())(); //next in sequence
+		});
+		Djsango.addEventListener('url_success', function(e){
+			if(e.target == ""){
+				test.pass("url_success for homepage; event target is url");
+			}
+			else if(e.target == "foo/1;2;3"){
+				test.assert("event.matches exists and is Array", e.matches instanceof Array);
+				test.assert("event.matches[1] == 1", e.matches[1] == "1");
+				
+				test.assert("event.request is set", e.request instanceof Djsango._Request);
+				test.assert("event.pattern is set", e.pattern instanceof RegExp);
+				test.assert("event.view is set", e.view instanceof Function);
+			}
+		});
+		
+		// 1 url_success with matches
+		Djsango.urlPatterns.add(/^foo\/(\d);(\d);(\d)$/, function(req){
+			(sequence.shift())(); //next in sequence
+		});
+		
+		// 2 url_fail
+		Djsango.addEventListener('navigate', function(e){
+			if(e.target == "notfound"){
+				test.assert("previousTarget is the old url", e.previousTarget == "foo/1;2;3");
+			}
+		});
+		Djsango.addEventListener('url_fail', function(e){
+			if(e.target == "notfound"){
+				test.pass("url_fail for notfound; event target is url");
+				(sequence.shift())(); //next in sequence
+			}
+		});
+		
+		// 3 view_error
+		Djsango.urlPatterns.add(/^viewerror/, function(req){
+			throw Error("you better catch me");
+		});
+		Djsango.addEventListener('view_error', function(e){
+			if(e.request.url == "viewerror"){
+				test.assert("view_error successfully found", e.target instanceof Error && e.target.message == "you better catch me");
+				test.assert("view_error event has expected properties",
+					e.request instanceof Djsango._Request &&
+					e.pattern instanceof RegExp &&
+					e.matches instanceof Array &&
+					e.view instanceof Function
+				);
+			}
+		});
+		Djsango.addEventListener('view_complete', function(e){
+			if(e.request.url == "viewerror"){
+				test.assert("view_complete with error successfully found", e.target instanceof Error && e.target.message == "you better catch me");
+				(sequence.shift())(); //next in sequence
+			}
+		});
+		
+		// 4 view_success
+		Djsango.urlPatterns.add(/^viewsuccess/, function(req){
+			test.pass("View successfully loaded");
+			return "SUCCESS RETURN";
+		});
+		Djsango.addEventListener('view_success', function(e){
+			if(e.request.url == "viewsuccess"){
+				test.assert("view_success successfully found", e.target == "SUCCESS RETURN");
+				test.assert("view_success event has expected properties",
+					e.request instanceof Djsango._Request &&
+					e.pattern instanceof RegExp &&
+					e.matches instanceof Array &&
+					e.view instanceof Function
+				);
+			}
+		});
+		Djsango.addEventListener('view_complete', function(e){
+			if(e.request.url == "viewsuccess"){
+				test.assert("view_complete successfully found", e.target == "SUCCESS RETURN");
+				test.assert("view_complete event has expected properties",
+					e.request instanceof Djsango._Request &&
+					e.pattern instanceof RegExp &&
+					e.matches instanceof Array &&
+					e.view instanceof Function
+				);
+			}
+		});
+		
+		
+		//var handleError = function(e){
+		//	test.fail(e);
+		//};
+		//self.onerror = handleError;
+		//Djsango.addEventListener("view_error", handleError);
+		//Djsango.addEventListener("error", handleError);
+		
+		Djsango.init();
+		
+		</script>
+	</body>
+</html>
