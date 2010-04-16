@@ -37,24 +37,16 @@ Djsango.prototype.toString = function(){
  */
 //Djsango.this._constructors = [];
 
-
-
 /**
  * Load the initial view based on the location.hash and
  * get everything going!
  */
-Djsango.init = function(urlPatterns){
-	//this.dispatchEvent('init');
-	//Djsango.navigate();
+Djsango.init = function(){
 	
 	// Initialize each of the modules (we probably don't need this?)
 	this._initializers.forEach(function(init){
 		init.apply(this);
 	}, this);
-	
-	if(urlPatterns){
-		this.urlPatterns.add.apply(this.urlPatterns, urlPatterns);
-	}
 	
 	//NOW WE NEED TO START
 	this.dispatchEvent('init');

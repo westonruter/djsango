@@ -15,18 +15,18 @@ Djsango.fragmentSigil = "!";
 Djsango._onhashchange = function(e){
 	var onhashchange = Djsango._onhashchange;
 	
-	// Prevent this hashchange handler if temporarily suppressed (i.e. navigate() was called by code)
-	if(onhashchange.suppressCount > 0){
-		onhashchange.suppressCount--;
-		return;
-	}
-	
 	// Defer to native hashchange event
 	if(!e)
 		e = window.event;
 	if(onhashchange.intervalTimerID && e && e.type && e.type.indexOf('hashchange') != -1){
 		window.clearInterval(onhashchange.intervalTimerID);
 		onhashchange.intervalTimerID = null;
+	}
+	
+	// Prevent this hashchange handler if temporarily suppressed (i.e. navigate() was called by code)
+	if(onhashchange.suppressCount > 0){
+		onhashchange.suppressCount--;
+		return;
 	}
 	
 	// Stop if we've already handled this
@@ -125,7 +125,7 @@ Djsango._URLPatternList.prototype.add = function(/*...*/){
 		if(typeof pattern == 'string')
 			pattern = new RegExp(pattern);
 		else if(!(pattern instanceof RegExp))
-			throw TypeError("The 'pattern' argument must be a RegExp.");
+			throw TypeError("The 'pattern' argument must be a RegExp: " + pattern);
 		//if(!(app instanceof Djsango))
 		//	throw TypeError("The 'app' argument must be an instance of Djsango");
 		if(!(view instanceof Function))
@@ -140,6 +140,10 @@ Djsango._URLPatternList.prototype.add = function(/*...*/){
 	
 	// If a list of pattern sets is passed in
 	if(arguments[0] instanceof Array){
+		if(arguments[0][0] instanceof Array){
+			throw TypeError("Expected add's arguments to be multiple 'tuples' of pattern/view/position sets, not an array of tuples.");
+		}
+		
 		for(var i = 0, len = arguments.length; i < len; i++){
 			add.call(this,
 				arguments[i][0], //pattern
@@ -160,13 +164,14 @@ Djsango._URLPatternList.prototype.add = function(/*...*/){
 };
 
 Djsango._URLPatternList.prototype.include = function(basePattern, app, position){
+	//TODO: basePattern should be optional; then it becomes like import
 	//TODO: Django include(<module or pattern_list>)
 	//TODO: Naming URL Patterns, url(regex, view, kwargs=None, name=None, prefix='')
 	
 	if(typeof basePattern == 'string')
 		basePattern = new RegExp(basePattern);
-	else if(!(basePattern instanceof RegExp))
-		throw TypeError("The 'basePattern' argument must be a RegExp.");
+	else if(!(basePattern instanceof RegExp) && basePattern)
+		throw TypeError("The 'basePattern' argument must be a RegExp, or not supplied at all.");
 	if(!(app instanceof Djsango))
 		throw TypeError("The 'app' argument must be a Djsango instance.");
 		
@@ -197,11 +202,14 @@ Djsango._URLPatternList.prototype.match = function(url){
 		}
 		else if(item instanceof Djsango._URLPatternListInclusion){
 			var suburl = url;
-			var urlMatches = url.match(item.basePattern);
-			if(urlMatches && url.indexOf(urlMatches[0]) === 0){
-				suburl = url.substr(urlMatches[0].length);
+			// Strip off base pattern from the URL if it was supplied
+			if(item.basePattern){
+				var urlMatches = url.match(item.basePattern);
+				if(urlMatches && url.indexOf(urlMatches[0]) === 0){
+					suburl = url.substr(urlMatches[0].length);
+				}
 			}
-			//Ensure that tested URLs never begin with slash
+			// Ensure that tested URLs never begin with slash
 			if(suburl.substr(0, 1) == '/')
 				suburl = suburl.substr(1);
 			matches = item.app.urlPatterns.match(suburl);
@@ -332,6 +340,8 @@ Djsango.navigate = function(url, replace){
 	// If can't discern the URL, then just use empty string
 	if(!url)
 		url = '';
+	if(url)
+		url = url.replace(/^\//, '');
 	
 	// Fire navigate event so that plugins can modify the hash or
 	// abort the navigation completely
@@ -359,6 +369,7 @@ Djsango.navigate = function(url, replace){
 	if(matches){
 		if(!(matches.urlPattern instanceof Djsango._URLPattern))
 			throw TypeError("Assertion fail");
+		
 		var pattern = matches.urlPattern.pattern;
 		var view = matches.urlPattern.view;
 		
@@ -367,9 +378,9 @@ Djsango.navigate = function(url, replace){
 			context = matches.app;
 		}
 		
-		var event = new Djsango.Event('url_match', matches);
+		var event = new Djsango.Event('url_success', url);
 		event.request = request;
-		//event.matches = matches;
+		event.matches = matches;
 		event.pattern = pattern;
 		event.view = view;
 		if(!context.dispatchEvent(event))

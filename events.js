@@ -40,7 +40,6 @@ Djsango.Event.prototype.preventDefault = function(){
  * handler should be called. By default it gets called in the order it was
  * added. Return value of a handler overwrites the event.target.
  */
-//Djsango.prototype.addEventListener =
 Djsango.addEventListener = function(type, handler, index){
 	if(!(this._eventListeners[type] instanceof Array))
 		this._eventListeners[type] = [];
@@ -50,6 +49,7 @@ Djsango.addEventListener = function(type, handler, index){
 	listeners.splice(index, 0, handler);
 	return listeners.length;
 };
+//TODO: implement Djsango.prototype.addEventListener which restrict listener to an app
 
 
 /**
