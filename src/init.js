@@ -3,6 +3,7 @@
  * By @westonruter; http://weston.ruter.net/
  * Project URL: http://github.com/westonruter/djsango
  * MIT/GPL license.
+ * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
  */
 
 
