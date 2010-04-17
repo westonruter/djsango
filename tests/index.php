@@ -194,8 +194,9 @@
 	
 	<hr>
 	<footer>
-		<time>2010-04-15</time>,
-		<address><a href="http://weston.ruter.net/">Weston Ruter</a></address>
+		<address><a href="http://weston.ruter.net/" rel="author">Weston Ruter</a> @
+		<a href="http://shepherdinteractive.com/">Shepherd Interactive</a></address>
+		<time>2010-04-15</time>
 	</footer>
 </body>
 </html>
