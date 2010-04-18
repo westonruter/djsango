@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Djsango Example</title>
+	<script src="../../src/init.js"></script>
+	<script src="../../src/events.js"></script>
+	<script src="../../src/urls.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+	<style>
+	[hidden] {
+		display:none;
+	}
+	footer {
+		margin-top:1em;
+		display:block;
+	}
+	#content {
+		padding:1em;
+		border:solid 2px black;
+		background-color:#eee;
+	}
+	</style>
+</head>
+<body>
+	<h1>Simple <a href="http://github.com/westonruter/djsango">Djsango</a> Example</h1>
+	
+	<!-- This is where the templates get rendered -->
+	<div id="content"><em>Loading...</em></div>
+	
+	<script src="helpers.js"></script>
+	<script>
+	// App-less views
+	Djsango.urlPatterns.add(/^$/, function(req){
+		return render_to_response(
+			document.getElementById('homeTemplate')
+		);
+	});
+	
+	Djsango.urlPatterns.add(/^about$/, function(req){
+		return render_to_response(
+			document.getElementById('aboutTemplate')
+		);
+	});
+	</script>
+	
+	<!-- Include the Adder app -->
+	<script src="adder/main.js"></script>
+	
+	<!-- Inclde the Power app -->
+	<script src="power/main.js"></script>
+	
+	<script>
+	//Initialize once all of the templates have been loaded (below)
+	jQuery(function(){
+		Djsango.urlPatterns.include(/^adder/, adderApp);
+		Djsango.urlPatterns.include(/^power/, powerApp);
+		Djsango.init();
+	});
+	
+	Djsango.addEventListener('error', function(e){
+		console.error(e)
+	})
+	</script>
+	
+	
+	<!-- TEMPLATES ******************************************** -->
+	<div hidden id="templates">
+		<!-- App-less Templates -->
+		<div id="homeTemplate">
+			<h1>Welcome! I am home page!</h1>
+			<p>Check out the <a href='#!power'>Power</a> app.</p>
+			<p>Also check out the <a href='#!adder'>Adder</a> app.</p>
+			<p><a href="#!about">About</a></p>
+		</div>
+		<div id="aboutTemplate">
+			<h1>About</h1>
+			This demo is powerd by <a href="http://github.com/westonruter/djsango"><dfn>Djsango</dfn></a>,
+			a Django-esque framework for client-side web applications.
+			“Djsango” is pronounced /dʒəˈsæŋɡoʊ/ with the second syllable stressed,
+			unlike “Django” which is pronounced /ˈdʒæŋɡoʊ/
+			<p>&lt; <a href="#">Return to home page</a></p>
+		</div>
+		
+		<!-- Power App Tempaltes -->
+		<div id="powerAppTemplate">
+			<h1>Welcome to the Power app!</h1>
+			<form action='#!power'>
+				<p><label>Base: <input name=base type=number value="" min=0></label></p>
+				<p><label>Exponent: <input name=exponent type=number value="" min=0></label></p>
+				<p><button type="submit"><code>Math.pow() it!</button></p>
+				<p>
+					Result:
+					<big><big>
+						<span class=base>?</span><sup class=exponent>?</sup> =
+						<output class='result'>?</output>
+					</big></big>
+				</p>
+			</form>
+			<p>&lt; <a href="#">Return to home page</a></p>
+		</div>
+		
+		<!-- Adder App Templates -->
+		<div id="adderAppIndexTemplate">
+			<h1>Welcome to the Adder app!</h1>
+			<p>You can perform these pre-defined additions:</p>
+			<ul>
+				<li><a href="#!adder/1;1">1+1</a></li>
+				<li><a href="#!adder/4;6">4+6</a></li>
+				<li><a href="#!adder/99;101">99+101</a></li>
+			</ul>
+			
+			<p>&lt; <a href="#">Return to home page</a></p>
+		</div>
+		
+		<div id="adderAppSummerTemplate">
+			<h2>Get ready to add...</h2>
+			
+			<h1>
+				<span class="addend1">?</span>
+				+
+				<span class="addend2">?</span>
+				=
+				<span class="sum">?</span>
+			</h1>
+			
+			<p>Isn't it great!? Try <a href="#!adder">some more</a>!</p>
+			<p>&lt; <a href="#">Return to home page</a></p>
+		</div>
+	</div>
+	
+	<footer>
+		<address><a href="http://weston.ruter.net/">Weston Ruter</a></address>
+		<time>2010-04-17</time>
+	</footer>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>4. Simple Templates | Djsango Test Case</title>
+		<!--#include file="head.html.inc"-->
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+		<style>
+		#content.error {
+			color:red;
+			font-style:italic;
+		}
+		</style>
+	</head>
+	<body>
+		<div id="content">loading...</div>
+		
+		<script>
+		test.expectedCount = 6;
+		self.location.href = "#" //reset
+		
+		var queue = [
+			function(){ Djsango.navigate('errorpage') },
+			function(){ Djsango.navigate('i-will-trigger-a-url_fail') },
+			function(){ Djsango.navigate('ok') }
+		];
+		
+		
+		// This processes the templates returned by the views
+		Djsango.addEventListener("view_success", function(event, templateObj){
+			// These is where you would put your template processor
+			template = templateObj.template.replace(/{name}/g, templateObj.params.name);
+			
+			//Cool template handler would be used here!
+			$('#content').removeClass('error').html(template);
+			switch(event.request.path){
+				case "":
+					test.assert("home page template good", template == "I am home page");
+					break;
+				case "ok":
+					test.assert("Ok page is good", template == "I am ok");
+					break;
+			}
+		});
+		
+		// This is where you would serve your error template
+		Djsango.addEventListener("view_error", function(event, error){
+			switch(event.request.path){
+				case "errorpage":
+					test.assert("Error page successful", error.message == "I am intentional error");
+					break;
+			}
+			$('#content').addClass('error').text(error.message);
+		});
+		
+		/*
+		view_success, view_error, view_complete
+		but: navigate, url_match, url_success, url_fail
+		*/
+		
+		
+		// This event happens when a URL returns 404
+		Djsango.addEventListener("url_fail", function(event, url){
+			test.assert("Intentional 404", url === "i-will-trigger-a-url_fail");
+			$('#content').addClass('error').text("Unable to find URL: " + url);
+			
+			if(queue.length) (queue.shift())();
+		});
+		
+		
+		// This is just for the test cases
+		Djsango.addEventListener("view_complete", function(event, result){
+			if(event.request.path == "errorpage"){
+				test.assert("view_complete event for error page has success=false", event.success === false);
+			}
+			else if(event.request.path == "ok"){
+				test.assert("view_complete event for ok page has success=true", event.success === true);
+			}
+			
+			if(queue.length) (queue.shift())();
+		});
+		
+		var testTemplate = "I am {name}";
+		
+		// Home page
+		Djsango.urlPatterns.add(/^$/, function(request){
+			return {
+				template: testTemplate,
+				params:{
+					name: "home page"
+				}
+			};
+		});
+		
+		Djsango.urlPatterns.add(/^errorpage$/, function(request){
+			throw Error("I am intentional error");
+		});
+		
+		Djsango.urlPatterns.add(/^ok/, function(request){
+			return {
+				template: testTemplate,
+				params:{
+					name: "ok"
+				}
+			};
+		});
+		
+		Djsango.addEventListener('error', function(e){
+			test.fail("Unexpected error: " + e.target);
+		});
+		
+		//The first url is "" which is the home page
+		Djsango.init();
+		
+		</script>
+	</body>
+</html>

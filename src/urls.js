@@ -333,7 +333,7 @@ Djsango.navigate = function(url, replace){
 	
 	// Get existing url and use it if no argument url provided; strip out Ajax hash shebang (fragment sigil)
 	if(url === undefined && existingHash.substr(0, Djsango.fragmentSigil.length) == Djsango.fragmentSigil){
-		var wasURL = url;
+		//var wasURL = url;
 		url = existingHash.substr(Djsango.fragmentSigil.length);
 	}
 	
@@ -389,13 +389,13 @@ Djsango.navigate = function(url, replace){
 			return false;
 		
 		var result;
-		var success;
+		var viewSuccess;
 		try {
 			// Dispatch the view
 			var args = matches;
 			args[0] = request;
 			result = matches.urlPattern.view.apply(context, args);
-			success = true;
+			viewSuccess = true;
 			
 			// Fire view success event
 			event = new Djsango.Event('view_success', result);
@@ -407,7 +407,7 @@ Djsango.navigate = function(url, replace){
 		}
 		catch(error){
 			result = error;
-			success = false;
+			viewSuccess = false;
 			
 			// Fire view error event
 			event = new Djsango.Event('view_error', error);
@@ -424,7 +424,7 @@ Djsango.navigate = function(url, replace){
 		event.matches = matches;
 		event.pattern = pattern;
 		event.view = view;
-		event.success = success;
+		event.success = viewSuccess;
 		context.dispatchEvent(event);
 		
 		return true; //return !(result instanceof Error);

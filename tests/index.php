@@ -62,7 +62,7 @@
 	</style>
 </head>
 <body>
-    <h1><a href="http://github.com/westonruter/djsango">Djsango</a> Tests: <span id='totalPass'>0</span>/<span id='totalFail'>0</span></h1>
+    <h1><a href="http://github.com/westonruter/djsango">Djsango</a> Tests: <abbr id='totalPass' title="Total tests passed">0</abbr>/<abbr id='totalFail' title="Total tests failed">0</abbr></h1>
 	
 	<form action="./" method="get">
 		<button type=submit name="autorun" value="on">Run All</button>
@@ -125,7 +125,7 @@
 	var totalFail = 0;
 	function fail(testname, assertion, error){
 		totalFail++;
-		document.getElementById('totalFail').innerHTML = totalPass;
+		document.getElementById('totalFail').innerHTML = totalFail;
 		completetest(testname, assertion, false, error);
 	}
 	//function pass(name, assertion){

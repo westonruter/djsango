@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<title>3. Request Object | Djsango Test Case</title>
 		<!--#include file="head.html.inc"-->
 	</head>
 	<body>
 		<script>
 		test.expectedCount = 13;
+		self.location.href = "#" //reset
 		
 		Djsango.urlPatterns.add(
 			[/^PATHNAME\/(\d\d\d\d)-(\d\d)-(\d\d)\/([a-z\-_]+)$/i, function(request, year, month, day, postname){
@@ -39,6 +41,10 @@
 		Djsango.addEventListener('url_fail', function(e){
 			test.fail(e);
 		})
+		
+		Djsango.addEventListener('error', function(e){
+			test.fail("Unexpected error: " + e.target);
+		});
 		
 		Djsango.init("PaThNaMe/2010-05-23/hello-world?single=first&mult[]=1&mult[]=2&last=one#very-meta");
 		

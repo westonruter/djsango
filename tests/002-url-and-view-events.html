@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>init2</title>
+		<title>2. URL and View Events | Djsango Test Case</title>
 		<!--#include file="head.html.inc"-->
 	</head>
 	<body>
 		<script>
 		test.expectedCount = 16;
+		self.location.href = "#" //reset
 		
 		var testApp = new Djsango("EventTests");
 		
@@ -110,6 +111,9 @@
 		//self.onerror = handleError;
 		//Djsango.addEventListener("view_error", handleError);
 		//Djsango.addEventListener("error", handleError);
+		Djsango.addEventListener('error', function(e){
+			test.fail("Unexpected error: " + e.target);
+		});
 		
 		Djsango.init();
 		

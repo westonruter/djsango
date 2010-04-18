@@ -1,7 +1,10 @@
 Djsango: A Django-esque framework for client-side web applications.
-By @westonruter; http://weston.ruter.net/
+By Weston Ruter @westonruter http://weston.ruter.net/
 Project URL: http://github.com/westonruter/djsango
 MIT/GPL license.
 Developed at Shepherd Interactive http://shepherdinteractive.com/
 
-This is currently under development.
+“Djsango” is pronounced /dʒəˈsæŋɡoʊ/ with the second syllable stressed,
+unlike “Django” which is pronounced /ˈdʒæŋɡoʊ/
+
+See: examples/demo1/

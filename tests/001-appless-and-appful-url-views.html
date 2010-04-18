@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>init1</title>
+		<title>1. App-less and App URL Views | Djsango Test Case</title>
 		<!--#include file="head.html.inc"-->
 	</head>
 	<body>
 		<script>
-		test.expectedCount = 12;
+		test.expectedCount = 13;
 		test.finalCheckDelay = 200;
+		self.location.href = "#" //reset
 		
 		//Test app-less URLs
 		Djsango.urlPatterns.add(
@@ -18,6 +19,7 @@
 			}],
 			[/^appless2$/, function(req){
 				test.pass("appless view 2, loaded via navigate(...)");
+				test.assert("location hash was updated", location.hash === "#!appless2");
 				self.location.href = "#!appless3";
 			}],
 			[/^appless3$/, function(req){
@@ -107,6 +109,10 @@
 		Djsango.addEventListener("view_error", handleError);
 		Djsango.addEventListener("error", handleError);
 		Djsango.addEventListener("url_fail", handleError);
+		
+		Djsango.addEventListener('error', function(e){
+			test.fail("Unexpected error: " + e.target);
+		});
 		
 		Djsango.init();
 		
