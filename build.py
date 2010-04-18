@@ -9,8 +9,13 @@ scripts = [
 
 concatenated = ""
 
+count = 0
 for script in scripts:
     f = open("src/" + script)
+    count += 1
+    
+    if count > 1:
+        concatenated += "\n\n\n// File: %s ###########################################\n\n" % script
     concatenated += f.read()
 
 concatenated = concatenated.replace("$Date$", time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))

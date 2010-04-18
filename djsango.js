@@ -1,11 +1,11 @@
 /*!
- * Djsango: A Django-esque framework for client-side web applications.
+ * Djsango: A Django-esque framework for client-side web applications
  * By @westonruter; http://weston.ruter.net/
  * Project URL: http://github.com/westonruter/djsango
  * MIT/GPL license.
  * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
  * Version: 0.1
- * Date: Sun, 18 Apr 2010 07:32:36 +0000
+ * Date: Sun, 18 Apr 2010 15:37:37 +0000
  */
 
 
@@ -66,6 +66,11 @@ Djsango.init = function(initialURL){
  * to this list which set up their respective functionalities.
  */
 Djsango._initializers = []; //We probably don't need this
+
+
+
+
+// File: events.js ###########################################
 
 /*!
  * Djsango Events
@@ -201,6 +206,11 @@ Djsango.removeEventListener = function(type, handler){
 	}
 	return false;
 };
+
+
+
+// File: urls.js ###########################################
+
 /*!
  * Djsango URLs
  */
