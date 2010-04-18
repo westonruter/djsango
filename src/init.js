@@ -4,6 +4,8 @@
  * Project URL: http://github.com/westonruter/djsango
  * MIT/GPL license.
  * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
+ * Version: $Version$
+ * Date: $Date$
  */
 
 
@@ -26,6 +28,7 @@ function Djsango(name, urlPatterns){
 	
 	this.dispatchEvent('construct');
 };
+Djsango.version = '$Version$';
 Djsango.toString = function(){
 	return "Djsango";
 };
