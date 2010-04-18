@@ -38,6 +38,8 @@ test.assert = function(msg, assertion){
 };
 
 self.onload = function(){
+	if(typeof Djsango == "undefined")
+		throw Error("Please build Djsango first before running tests.");
 	self.setTimeout(function(){
 		if(test.expectedCount != test.actualCount){
 			test.fail("the total expected number of tests were fired (expected " + test.expectedCount + "; actual " + test.actualCount + ")");

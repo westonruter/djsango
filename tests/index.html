@@ -95,7 +95,7 @@
 	];
 	jQuery(testcases).each(function(){
 		var $li = jQuery('<li id="' + this + '">');
-		$li.append("<a href='" + this + "'>" + this + "</a>");
+		$li.append("<a href='#" + this + "'>" + this + "</a>");
 		$li.append("<iframe class='container' src='about:blank'></iframe>");
 		$li.append("<ol class='assertions'></ol>");
 		$("#tests").append($li);
