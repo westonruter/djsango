@@ -5,7 +5,8 @@ MIT/GPL license.
 Developed at Shepherd Interactive http://shepherdinteractive.com/
 
 “Djsango” is pronounced /dʒəˈsæŋɡoʊ/ with the second syllable stressed,
-unlike “Django” which is pronounced /ˈdʒæŋɡoʊ/
+unlike “Django” which is pronounced /ˈdʒæŋɡoʊ/. The extra ‘s’ in the name
+comes from “js” as in JavaScript: D + js + ango.
 
 See: examples/demo1/
 
