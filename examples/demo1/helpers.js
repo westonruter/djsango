@@ -49,5 +49,5 @@ Djsango.addEventListener("view_error", function(event, error){
 
 // Handle a 404 error
 Djsango.addEventListener("url_fail", function(event, url){
-	jQuery('#content').text("404 Error: couldn't find " + url);
+	jQuery('#content').text("404 Error: couldn't find '" + url + "'.");
 });

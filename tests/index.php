@@ -60,6 +60,7 @@
 		color:red;
 	}
 	</style>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.1/jquery.min.js"></script>
 </head>
 <body>
     <h1><a href="http://github.com/westonruter/djsango">Djsango</a> Tests: <abbr id='totalPass' title="Total tests passed">0</abbr>/<abbr id='totalFail' title="Total tests failed">0</abbr></h1>
@@ -68,6 +69,9 @@
 		<button type=submit name="autorun" value="on">Run All</button>
 	</form>
 	
+	<ul id="tests"></ul>
+	
+	<!--
 	<ul id="tests">
 	<?php
 	$testfiles = glob("*.html");
@@ -80,8 +84,24 @@
 		</li>
 	<?php endforeach; ?>
 	</ul>
+	-->
 	
 	<script>
+	var testcases = [
+		"001-appless-and-appful-url-views",
+		"002-url-and-view-events",
+		"003-request-object",
+		"004-simple-templates"
+	];
+	jQuery(testcases).each(function(){
+		var $li = jQuery('<li id="' + this + '">');
+		$li.append("<a href='" + this + "'>" + this + "</a>");
+		$li.append("<iframe class='container' src='about:blank'></iframe>");
+		$li.append("<ol class='assertions'></ol>");
+		$("#tests").append($li);
+	});
+	
+	
 	function isAutorun(){
 		if(location.search.indexOf('autorun') == -1)
 			return false;
