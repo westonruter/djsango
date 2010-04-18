@@ -8,3 +8,17 @@ Developed at Shepherd Interactive http://shepherdinteractive.com/
 unlike “Django” which is pronounced /ˈdʒæŋɡoʊ/
 
 See: examples/demo1/
+
+Djsango.urlPatterns.add(/^$/, function(req){
+	return "HOME PAGE";
+});
+
+var adderApp = new Djsango("Adder");
+adderApp.urlPatterns.add(/^(\d+);(\d+)$/, function(req, add1, add2){
+	return parseInt(add1) + parseInt(add2);
+});
+Djsango.urlPatterns.include(/^adder/, adderApp);
+
+//...
+
+Djsango.init();
