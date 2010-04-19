@@ -1,13 +1,3 @@
-/*!
- * Djsango: A Django-esque framework for client-side web applications
- * By @westonruter; http://weston.ruter.net/
- * Project URL: http://github.com/westonruter/djsango
- * MIT/GPL license.
- * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
- * Version: $Version$
- * Date: $Date$
- */
-
 
 /**
  * Django-style framework for client-side JavaScript web applications.

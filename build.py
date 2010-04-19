@@ -7,15 +7,21 @@ scripts = [
     "urls.js",
 ]
 
-concatenated = ""
+concatenated = """/*!
+ * Djsango: A Django-esque framework for client-side web applications
+ * By @westonruter; http://weston.ruter.net/
+ * Project URL: http://github.com/westonruter/djsango
+ * MIT/GPL license.
+ * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
+ * Version: 0.1
+ * Date: Mon, 19 Apr 2010 06:50:08 +0000
+ */
+"""
 
-count = 0
+
 for script in scripts:
     f = open("src/" + script)
-    count += 1
-    
-    if count > 1:
-        concatenated += "\n\n\n// File: %s ###########################################\n\n" % script
+    concatenated += "\n\n\n// File: %s ---------------------------------------------------------------\n\n" % script
     concatenated += f.read()
 
 concatenated = concatenated.replace("$Date$", time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
