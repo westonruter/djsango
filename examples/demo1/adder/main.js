@@ -7,7 +7,7 @@ powerApp.urlPatterns.add(/^$/, function(request){
 	};
 	params.result = Math.pow(params.base, params.exponent);
 	
-	return render_to_response(
+	return render_to_response( //function located in helpers.js
 		document.getElementById('powerAppTemplate'),
 		params
 	)

@@ -43,13 +43,13 @@
 	<script>
 	// App-less views
 	Djsango.urlPatterns.add(/^$/, function(req){
-		return render_to_response(
+		return render_to_response( //function located in helpers.js
 			document.getElementById('homeTemplate')
 		);
 	});
 	
 	Djsango.urlPatterns.add(/^about$/, function(req){
-		return render_to_response(
+		return render_to_response( //function located in helpers.js
 			document.getElementById('aboutTemplate')
 		);
 	});
@@ -58,7 +58,7 @@
 	<!-- Include the Adder app -->
 	<script src="adder/main.js"></script>
 	
-	<!-- Inclde the Power app -->
+	<!-- Include the Power app -->
 	<script src="power/main.js"></script>
 	
 	<script>
