@@ -73,11 +73,11 @@ Djsango._URLPattern = function(pattern, /*app,*/ view){
 Djsango._URLPattern.prototype.toString = function(){
 	return "Djsango._URLPattern<" + this.pattern + ">";
 };
-Djsango._URLPattern.prototype.match = function(url){
-	if(typeof url != "string")
-		throw Error("Expected 'url' to be a string.");
-	return url.match(this.pattern);
-};
+//Djsango._URLPattern.prototype.match = function(url){
+//	if(typeof url != "string")
+//		throw Error("Expected 'url' to be a string.");
+//	return url.match(this.pattern);
+//};
 
 
 /**
@@ -188,17 +188,28 @@ Djsango._URLPatternList.prototype.include = function(basePattern, app, position)
 /**
  * 
  * This needs to return the URLPattern that matched as well as the matches
+ * @todo Should match return an object {matches, app, item}; we don't want to override matches' properties
  */
 Djsango._URLPatternList.prototype.match = function(url){
-	var matches;
+	var result = null;
+	
+	var matches, item;
 	for(var i = 0, len = this.length; i < len; i++){
-		var item = this[i];
+		item = this[i];
 		if(item instanceof Djsango._URLPattern){
-			matches = item.match(url);
+			matches = url.match(item.pattern);
 			if(matches){
-				matches.urlPattern = item;
-				matches.app = this.app;
+				result = {
+					matches: matches,
+					urlPattern: item,
+					app: this.app
+				};
 			}
+			//matches = url.match(item.pattern); //matches = item.match(url);
+			//if(matches){
+			//	matches.urlPattern = item;
+			//	matches.app = this.app;
+			//}
 		}
 		else if(item instanceof Djsango._URLPatternListInclusion){
 			var suburl = url;
@@ -212,18 +223,19 @@ Djsango._URLPatternList.prototype.match = function(url){
 			// Ensure that tested URLs never begin with slash
 			if(suburl.substr(0, 1) == '/')
 				suburl = suburl.substr(1);
-			matches = item.app.urlPatterns.match(suburl);
+			result = item.app.urlPatterns.match(suburl);
 		}
 		else {
 			throw TypeError("Unexpected member in urlPatterns: " + this[i]);
 		}
 		
-		if(matches){
+		if(result){
 			break;
 		}
 	}
 	
-	return matches;
+	//return matches;
+	return result;
 };
 
 
@@ -367,24 +379,25 @@ Djsango.navigate = function(url, replace){
 	//NOTE: In order for this to work, the app needs to be tied to the view; currying?
 	
 	
-	var matches = this.urlPatterns.match(request.path);
-	if(matches){
-		if(!(matches.urlPattern instanceof Djsango._URLPattern))
+	var matchResult = this.urlPatterns.match(request.path);
+	if(matchResult){
+		if(!(matchResult.urlPattern instanceof Djsango._URLPattern))
 			throw TypeError("Assertion fail");
+		request.match = matchResult;
 		
-		var pattern = matches.urlPattern.pattern;
-		var view = matches.urlPattern.view;
+		//var pattern = matchResult.urlPattern.pattern;
+		//var view = matchResult.urlPattern.view;
 		
 		// Update the context for the view and events
-		if(matches.app){
-			context = matches.app;
+		if(matchResult.app){
+			context = matchResult.app;
 		}
 		
 		var event = new Djsango.Event('url_success', url);
 		event.request = request;
-		event.matches = matches;
-		event.pattern = pattern;
-		event.view = view;
+		//event.matches = matchResult;
+		//event.pattern = pattern;
+		//event.view = view;
 		if(!context.dispatchEvent(event))
 			return false;
 		
@@ -392,17 +405,17 @@ Djsango.navigate = function(url, replace){
 		var viewSuccess;
 		try {
 			// Dispatch the view
-			var args = matches;
-			args[0] = request;
-			result = matches.urlPattern.view.apply(context, args);
+			var args = matchResult.matches;
+			args[0] = request; //replace the entire string match with the request object
+			result = matchResult.urlPattern.view.apply(context, args);
 			viewSuccess = true;
 			
 			// Fire view success event
 			event = new Djsango.Event('view_success', result);
 			event.request = request;
-			event.matches = matches;
-			event.pattern = pattern;
-			event.view = view;
+			//event.matches = matches;
+			//event.pattern = pattern;
+			//event.view = view;
 			context.dispatchEvent(event);
 		}
 		catch(error){
@@ -412,18 +425,18 @@ Djsango.navigate = function(url, replace){
 			// Fire view error event
 			event = new Djsango.Event('view_error', error);
 			event.request = request;
-			event.matches = matches;
-			event.pattern = pattern;
-			event.view = view;
+			//event.matches = matches;
+			//event.pattern = pattern;
+			//event.view = view;
 			context.dispatchEvent(event);
 		}
 		
 		// Fire view complete event
 		event = new Djsango.Event('view_complete', result);
 		event.request = request;
-		event.matches = matches;
-		event.pattern = pattern;
-		event.view = view;
+		//event.matches = matches;
+		//event.pattern = pattern;
+		//event.view = view;
 		event.success = viewSuccess;
 		context.dispatchEvent(event);
 		
