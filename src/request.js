@@ -30,6 +30,7 @@ Djsango.Request = function(/*...*/){
 		this.data = args.data || null;
 		this.redirect = !!args.redirect;
 	}
+	this.method = this.method.toUpperCase();
 	
 	var parsedUrl = this.url.match(/^(.*?)(?:\?(.*?))?(?:#(.*))?$/);
 	if(!parsedUrl)
