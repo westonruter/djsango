@@ -1,5 +1,7 @@
 /*!
  * Djsango URLs
+ *
+ * @todo Rename urls to routes
  */
 
 //if(!Djsango.Event)
@@ -35,7 +37,7 @@ Djsango._onhashchange = function(e){
 	
 	onhashchange.previousHash = window.location.hash;
 	
-	Djsango.navigate();
+	Djsango.get();
 };
 Djsango._onhashchange.intervalTimerID = null;
 Djsango._onhashchange.intervalMS = 100;
@@ -63,17 +65,18 @@ Djsango._initializers.push(function(e){
 /**
  * Djsango URL object which associates a pattern (RegExp) with a view (function)
  */
-Djsango._URLPattern = function(pattern, /*app,*/ view){
+Djsango.Route = function(pattern, /*app,*/ view){
 	//TODO: Allow name parameter http://docs.djangoproject.com/en/dev/topics/http/urls/#id2
 	this.pattern = pattern;
-	//this.app = app;
 	this.view = view;
+	this.app = null;
+	this.matches = [];
 };
-//Djsango._URLPattern.prototype.app = null;
-Djsango._URLPattern.prototype.toString = function(){
-	return "Djsango._URLPattern<" + this.pattern + ">";
+//Djsango.Route.prototype.app = null;
+Djsango.Route.prototype.toString = function(){
+	return "Djsango.Route<" + this.pattern + ">";
 };
-//Djsango._URLPattern.prototype.match = function(url){
+//Djsango.Route.prototype.match = function(url){
 //	if(typeof url != "string")
 //		throw Error("Expected 'url' to be a string.");
 //	return url.match(this.pattern);
@@ -83,19 +86,19 @@ Djsango._URLPattern.prototype.toString = function(){
 /**
  * Representation of a URLPatternList included from another app
  */
-Djsango._URLPatternListInclusion = function(basePattern, app){
+Djsango.RouteListInclusion = function(basePattern, app){
 	this.basePattern = basePattern;
 	this.app = app;
 };
-Djsango._URLPatternListInclusion.prototype.toString = function(){
-	return "Djsango._URLPatternListInclusion<" + this.basePattern + ", " + this.app + ">";
+Djsango.RouteListInclusion.prototype.toString = function(){
+	return "Djsango.RouteListInclusion<" + this.basePattern + ", " + this.app + ">";
 };
 
 
 /**
  * i.e. Django's django.conf.urls.defaults.patterns
  */
-Djsango._URLPatternList = function(){
+Djsango.RouteList = function(){
 	//if(list && !(list instanceof Array))
 	//	throw TypeError("Expected a list as the argument.");
 	
@@ -111,14 +114,14 @@ Djsango._URLPatternList = function(){
 	//}
 };
 
-Djsango._URLPatternList.prototype = new Array();
-Djsango._URLPatternList.prototype.app = null; //keep track of who we belong to
+Djsango.RouteList.prototype = new Array();
+Djsango.RouteList.prototype.app = null; //keep track of who we belong to
 
 
 /**
  * Splice in either a single URL Pattern or multiple URL Patterns.
  */
-Djsango._URLPatternList.prototype.add = function(/*...*/){
+Djsango.RouteList.prototype.add = function(/*...*/){
 	function add(pattern, /*app,*/ view, position){
 		//QUESTION: Should it always be a string like Django? And only get JIT compiled?
 		//          To do URLConf unclude
@@ -131,11 +134,11 @@ Djsango._URLPatternList.prototype.add = function(/*...*/){
 		if(!(view instanceof Function))
 			throw TypeError("The 'view' argument must be a function");
 	
-		var urlPattern = new Djsango._URLPattern(pattern, view);
+		var route = new Djsango.Route(pattern, view);
 		if(position === undefined)
 			position = this.length;
-		this.splice(position, 0, urlPattern);
-		return urlPattern;
+		this.splice(position, 0, route);
+		return route;
 	}
 	
 	// If a list of pattern sets is passed in
@@ -163,7 +166,7 @@ Djsango._URLPatternList.prototype.add = function(/*...*/){
 	
 };
 
-Djsango._URLPatternList.prototype.include = function(basePattern, app, position){
+Djsango.RouteList.prototype.include = function(basePattern, app, position){
 	//TODO: basePattern should be optional; then it becomes like import
 	//TODO: Django include(<module or pattern_list>)
 	//TODO: Naming URL Patterns, url(regex, view, kwargs=None, name=None, prefix='')
@@ -177,7 +180,7 @@ Djsango._URLPatternList.prototype.include = function(basePattern, app, position)
 		
 	if(position === undefined)
 		position = this.length;
-	var patternInclusion = new Djsango._URLPatternListInclusion(
+	var patternInclusion = new Djsango.RouteListInclusion(
 		basePattern,
 		app
 	);
@@ -190,28 +193,36 @@ Djsango._URLPatternList.prototype.include = function(basePattern, app, position)
  * This needs to return the URLPattern that matched as well as the matches
  * @todo Should match return an object {matches, app, item}; we don't want to override matches' properties
  */
-Djsango._URLPatternList.prototype.match = function(url){
+Djsango.RouteList.prototype.match = function(url){
 	var result = null;
 	
 	var matches, item;
 	for(var i = 0, len = this.length; i < len; i++){
 		item = this[i];
-		if(item instanceof Djsango._URLPattern){
+		if(item instanceof Djsango.Route){
 			matches = url.match(item.pattern);
 			if(matches){
-				result = {
-					matches: matches,
-					urlPattern: item,
-					app: this.app
-				};
+				// Clone to new URLPattern
+				result = new Djsango.Route(
+					item.pattern,
+					item.view
+				);
+				result.app = this.app;
+				result.matches = matches;
+				
+				//result = { //This sucks. TODO
+				//	items: matches,
+				//	route: item,
+				//	app: this.app
+				//};
 			}
 			//matches = url.match(item.pattern); //matches = item.match(url);
 			//if(matches){
-			//	matches.urlPattern = item;
+			//	matches.route = item;
 			//	matches.app = this.app;
 			//}
 		}
-		else if(item instanceof Djsango._URLPatternListInclusion){
+		else if(item instanceof Djsango.RouteListInclusion){
 			var suburl = url;
 			// Strip off base pattern from the URL if it was supplied
 			if(item.basePattern){
@@ -219,14 +230,15 @@ Djsango._URLPatternList.prototype.match = function(url){
 				if(urlMatches && url.indexOf(urlMatches[0]) === 0){
 					suburl = url.substr(urlMatches[0].length);
 				}
+				// Ensure that tested URLs never begin with slash
+				if(suburl.substr(0, 1) == '/'){
+					suburl = suburl.substr(1);
+				}
 			}
-			// Ensure that tested URLs never begin with slash
-			//if(suburl.substr(0, 1) == '/')
-			//	suburl = suburl.substr(1);
-			result = item.app.urlPatterns.match(suburl);
+			result = item.app.routes.match(suburl);
 		}
 		else {
-			throw TypeError("Unexpected member in urlPatterns: " + this[i]);
+			throw TypeError("Unexpected member in routes: " + this[i]);
 		}
 		
 		if(result){
@@ -240,20 +252,20 @@ Djsango._URLPatternList.prototype.match = function(url){
 
 
 //Djsango._initializers.push(function(){
-//	if(!this.urlPatterns)
-//		this.urlPatterns = new Djsango._URLPatternList();
+//	if(!this.routes)
+//		this.routes = new Djsango.RouteList();
 //});
 
-//Djsango.urlPatterns = new Djsango._URLPatternList();
+//Djsango.routes = new Djsango.RouteList();
 //Djsango.prototype._constructors.push(function(){
-//	this.urlPatterns = new Djsango._URLPatternList(); //why not just put this in the constructor?
+//	this.routes = new Djsango.RouteList(); //why not just put this in the constructor?
 //});
 
 
 /**
  * Allow URLPatterns to be assigned via simple array
  */
-//Djsango.__defineSetter__('urlPatterns', function(list){
+//Djsango.__defineSetter__('routes', function(list){
 //	if(!(list instanceof Array))
 //		throw TypeError("Only assignment by list is permitted.");
 //	
@@ -264,188 +276,5 @@ Djsango._URLPatternList.prototype.match = function(url){
 //	}
 //});
 
-Djsango.urlPatterns = new Djsango._URLPatternList();
-Djsango.urls = Djsango.urlPatterns; //Alias
-
-/**
- * Request object similar to Django's; instead of GET, POST, REQUEST
- * members being instances of QueryDict, there is only one member `queryDict`
- * that has the GET parameters, as obviously POST isn't possible.
- */
-Djsango._Request = function(url, method, data){
-	this.method = method || 'GET';
-	this.url = url;
-	var parsedUrl = url.match(/^(.*?)(?:\?(.*?))?(?:#(.*))?$/);
-	if(!parsedUrl)
-		throw SyntaxError("Unable to parse URL: " + url);
-	
-	this.path = parsedUrl[1];
-	this.query = parsedUrl[2];
-	this.fragment = parsedUrl[3];
-	
-	// Parse the query parameters
-	this.queryDict = {};
-	if(this.query){
-		var queryPairs = this.query.split(/&/);
-		for(var i = 0; i < queryPairs.length; i++){
-			var queryPair = queryPairs[i].split(/=/, 2);
-			var key = decodeURIComponent(queryPair[0]);
-			var value = decodeURIComponent(queryPair[1]);
-			
-			// List value
-			if(key.substr(-2) == '[]'){
-				key = key.substr(0, key.length-2);
-				if(!this.queryDict[key])
-					this.queryDict[key] = [];
-				this.queryDict[key].push(value);
-			}
-			// Single value
-			else {
-				this.queryDict[key] = value;
-			}
-		}
-	}
-	
-	this.data = data || this.queryDict;
-	
-};
-Djsango._Request.prototype.toString = function(){
-	return "Djsango._Request<" + this.url + ">";
-};
-
-
-//TODO
-Djsango._Response = function(){
-	throw Error("NOT IMPLEMENTED");
-};
-
-
-
-Djsango._previousURL = null;
-
-/**
- * Load the view associated with the hash supplied; if empty, the
- * existing page's hash is used; otherwise, the history is changed
- * to the newly provided hash.
- * @returns {boolean} True if navigation succeeded: event handlers
- *                    didn't prevent and a URL matched.
- * @todo We need a way to emulate POST/PUT/DELETE requests.
- * @todo Replace this with Djsango.request()? And Djsango.get()?
- */
-Djsango.navigate = function(url, replace, method, data){
-	method = method ? method.toUpperCase() : 'GET';
-	
-	var context = this;
-	var existingHash = window.location.hash.replace(/^#/, '');
-	
-	// Get existing url and use it if no argument url provided; strip out Ajax hash shebang (fragment sigil)
-	if(url === undefined && existingHash.substr(0, Djsango.fragmentSigil.length) == Djsango.fragmentSigil){
-		//var wasURL = url;
-		url = existingHash.substr(Djsango.fragmentSigil.length);
-	}
-	
-	// If can't discern the URL, then just use empty string
-	if(!url)
-		url = '';
-	//if(url)
-	//	url = url.replace(/^\//, '');
-	
-	// Fire navigate event so that plugins can modify the hash or
-	// abort the navigation completely
-	var event = new Djsango.Event('navigate', url);
-	event.previousTarget = Djsango._previousURL;
-	if(!this.dispatchEvent(event))
-		return false;
-	url = event.target;
-	Djsango._previousURL = url;
-	
-	// Update window location if url isn't the existing one
-	var newLocationHash = '#' + Djsango.fragmentSigil + url;
-	if(arguments.length && newLocationHash != window.location.hash){
-		Djsango._onhashchange.suppressCount++;
-		if(replace)
-			window.location.replace(newLocationHash);
-		else
-			window.location.href = newLocationHash;
-	}
-	
-	//TODO: Put this above for a new 'request' event replacing 'navigate'
-	var request = new Djsango._Request(url, method, data);
-	
-	//NOTE: In order for this to work, the app needs to be tied to the view; currying?
-	
-	
-	var matchResult = this.urlPatterns.match(request.path);
-	if(matchResult){
-		if(!(matchResult.urlPattern instanceof Djsango._URLPattern))
-			throw TypeError("Assertion fail");
-		request.match = matchResult;
-		
-		//var pattern = matchResult.urlPattern.pattern;
-		//var view = matchResult.urlPattern.view;
-		
-		// Update the context for the view and events
-		if(matchResult.app){
-			context = matchResult.app;
-		}
-		
-		var event = new Djsango.Event('url_success', url);
-		event.request = request;
-		//event.matches = matchResult;
-		//event.pattern = pattern;
-		//event.view = view;
-		if(!context.dispatchEvent(event))
-			return false;
-		
-		var result;
-		var viewSuccess;
-		try {
-			// Dispatch the view
-			var args = matchResult.matches;
-			args[0] = request; //replace the entire string match with the request object
-			result = matchResult.urlPattern.view.apply(context, args);
-			viewSuccess = true;
-			
-			// Fire view success event
-			event = new Djsango.Event('view_success', result);
-			event.request = request;
-			//event.matches = matches;
-			//event.pattern = pattern;
-			//event.view = view;
-			context.dispatchEvent(event);
-		}
-		catch(error){
-			result = error;
-			viewSuccess = false;
-			
-			// Fire view error event
-			event = new Djsango.Event('view_error', error);
-			event.request = request;
-			//event.matches = matches;
-			//event.pattern = pattern;
-			//event.view = view;
-			context.dispatchEvent(event);
-		}
-		
-		// Fire view complete event
-		event = new Djsango.Event('view_complete', result);
-		event.request = request;
-		//event.matches = matches;
-		//event.pattern = pattern;
-		//event.view = view;
-		event.success = viewSuccess;
-		context.dispatchEvent(event);
-		
-		return true; //return !(result instanceof Error);
-	}
-	else {
-		var event = new Djsango.Event('url_fail', url);
-		context.dispatchEvent(event);
-	}
-	return false;
-};
-
-
-
-
-//TODO: Djsango.watchLocation(); Djsango.unwatchLocation();	
+Djsango.routes = new Djsango.RouteList();
+//Djsango.urls = Djsango.routes; //Alias

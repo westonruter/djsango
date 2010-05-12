@@ -2,15 +2,15 @@
 /**
  * Django-style framework for client-side JavaScript web applications.
  */
-function Djsango(name, urlPatterns){
+function Djsango(name, routes){
 	this.name = name;
 	
-	this.urlPatterns = new Djsango._URLPatternList();
-	this.urlPatterns.app = this;
-	this.urls = this.urlPatterns; //Alias
+	this.routes = new Djsango.RouteList();
+	this.routes.app = this;
+	//this.urls = this.routes; //Alias
 	
-	if(urlPatterns){
-		this.urlPatterns.add.apply(this.urlPatterns, urlPatterns);
+	if(routes){
+		this.routes.add.apply(this.routes, routes);
 	}
 	
 	// Initialize each of the modules
@@ -52,9 +52,9 @@ Djsango.init = function(initialURL){
 		return false;
 	
 	if(initialURL)
-		this.navigate(initialURL, true);
+		this.request(initialURL);
 	else
-		this.navigate();
+		this.request();
 	
 	return true;
 };

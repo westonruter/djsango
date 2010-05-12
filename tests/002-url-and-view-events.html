@@ -13,14 +13,14 @@
 		var testApp = new Djsango("EventTests");
 		
 		var sequence = [
-			function(){ Djsango.navigate("foo/1;2;3") },
-			function(){ Djsango.navigate("notfound") },
-			function(){ Djsango.navigate("viewerror") },
-			function(){ Djsango.navigate("viewsuccess") }
+			function(){ Djsango.request("foo/1;2;3") },
+			function(){ Djsango.request("notfound") },
+			function(){ Djsango.request("viewerror") },
+			function(){ Djsango.request("viewsuccess") }
 		]
 		
 		// 0 url_success
-		Djsango.urlPatterns.add(/^$/, function(req){
+		Djsango.routes.add(/^$/, function(req){
 			(sequence.shift())(); //next in sequence
 		});
 		Djsango.addEventListener('url_success', function(e){
@@ -28,22 +28,22 @@
 				test.pass("url_success for homepage; event target is url");
 			}
 			else if(e.target == "foo/1;2;3"){
-				test.assert("event.matches exists and is Array", e.matches instanceof Array);
-				test.assert("event.matches[1] == 1", e.matches[1] == "1");
+				test.assert("event.matches exists and is Array", e.request.route.matches instanceof Array);
+				test.assert("event.matches[1] == 1", e.request.route.matches[1] == "1");
 				
-				test.assert("event.request is set", e.request instanceof Djsango._Request);
-				test.assert("event.pattern is set", e.pattern instanceof RegExp);
-				test.assert("event.view is set", e.view instanceof Function);
+				test.assert("event.request is set", e.request instanceof Djsango.Request);
+				test.assert("event.pattern is set", e.request.route.pattern instanceof RegExp);
+				test.assert("event.view is set", e.request.route.view instanceof Function);
 			}
 		});
 		
 		// 1 url_success with matches
-		Djsango.urlPatterns.add(/^foo\/(\d);(\d);(\d)$/, function(req){
+		Djsango.routes.add(/^foo\/(\d);(\d);(\d)$/, function(req){
 			(sequence.shift())(); //next in sequence
 		});
 		
 		// 2 url_fail
-		Djsango.addEventListener('navigate', function(e){
+		Djsango.addEventListener('request', function(e){
 			if(e.target == "notfound"){
 				test.assert("previousTarget is the old url", e.previousTarget == "foo/1;2;3");
 			}
@@ -56,17 +56,17 @@
 		});
 		
 		// 3 view_error
-		Djsango.urlPatterns.add(/^viewerror/, function(req){
+		Djsango.routes.add(/^viewerror/, function(req){
 			throw Error("you better catch me");
 		});
 		Djsango.addEventListener('view_error', function(e){
 			if(e.request.url == "viewerror"){
 				test.assert("view_error successfully found", e.target instanceof Error && e.target.message == "you better catch me");
 				test.assert("view_error event has expected properties",
-					e.request instanceof Djsango._Request &&
-					e.pattern instanceof RegExp &&
-					e.matches instanceof Array &&
-					e.view instanceof Function
+					e.request instanceof Djsango.Request &&
+					e.request.route instanceof Djsango.Route &&
+					e.request.route.matches instanceof Array &&
+					e.request.route.view instanceof Function
 				);
 			}
 		});
@@ -78,7 +78,7 @@
 		});
 		
 		// 4 view_success
-		Djsango.urlPatterns.add(/^viewsuccess/, function(req){
+		Djsango.routes.add(/^viewsuccess/, function(req){
 			test.pass("View successfully loaded");
 			return "SUCCESS RETURN";
 		});
@@ -86,10 +86,10 @@
 			if(e.request.url == "viewsuccess"){
 				test.assert("view_success successfully found", e.target == "SUCCESS RETURN");
 				test.assert("view_success event has expected properties",
-					e.request instanceof Djsango._Request &&
-					e.pattern instanceof RegExp &&
-					e.matches instanceof Array &&
-					e.view instanceof Function
+					e.request instanceof Djsango.Request &&
+					e.request.route instanceof Djsango.Route &&
+					e.request.route.matches instanceof Array &&
+					e.request.route.view instanceof Function
 				);
 			}
 		});
@@ -97,10 +97,10 @@
 			if(e.request.url == "viewsuccess"){
 				test.assert("view_complete successfully found", e.target == "SUCCESS RETURN");
 				test.assert("view_complete event has expected properties",
-					e.request instanceof Djsango._Request &&
-					e.pattern instanceof RegExp &&
-					e.matches instanceof Array &&
-					e.view instanceof Function
+					e.request instanceof Djsango.Request &&
+					e.request.route instanceof Djsango.Route &&
+					e.request.route.matches instanceof Array &&
+					e.request.route.view instanceof Function
 				);
 			}
 		});

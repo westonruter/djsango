@@ -12,20 +12,20 @@
 		self.location.href = "#" //reset
 		
 		//Test app-less URLs
-		Djsango.urlPatterns.add(
+		Djsango.routes.add(
 			[/^$/, function(req){
-				test.pass("appless view 1, loaded via init->navigate()");
+				test.pass("appless view 1, loaded via init->request()");
 				test.assert("appless view context is Django", this == Djsango)
-				Djsango.navigate("appless2");
+				Djsango.request("appless2");
 			}],
 			[/^appless2$/, function(req){
-				test.pass("appless view 2, loaded via navigate(...)");
+				test.pass("appless view 2, loaded via request(...)");
 				test.assert("location hash was updated", location.hash === "#!appless2");
 				self.location.href = "#!appless3";
 			}],
 			[/^appless3$/, function(req){
 				test.pass("appless view 3, loaded via location.hash = X");
-				Djsango.navigate("test/1");
+				Djsango.request("test/1");
 			}]
 		);
 		
@@ -34,53 +34,54 @@
 			/^1/, function(){
 				test.pass("test app view 1");
 				test.assert("appful view context is instance of Django", this instanceof Djsango)
-				Djsango.navigate("test/2");
+				Djsango.request("test/2");
 			}
 		]);
-		testApp.urlPatterns.add(/^2/, function(){
+		testApp.routes.add(/^2/, function(){
 			test.pass("test app view 2");
-			location.href = "#!test/3";
+			self.location.href = "#!test/3";
+			//Djsango.request();
 		});
-		testApp.urlPatterns.add(
+		testApp.routes.add(
 			[/^3/, function(){
 				test.pass("test app view 3");
-				Djsango.navigate("test/4");
+				Djsango.request("test/4");
 			}],
 			[/^4/, function(){
 				test.pass("test app view 4");
 				
 				//Now add new app URLs by position
-				testApp.urlPatterns.add(
+				testApp.routes.add(
 					/^position/,
 					function(req){ test.fail("App URL should not get found!") },
 					2
 				);
-				testApp.urlPatterns.add(
+				testApp.routes.add(
 					/^position/,
 					function(req){ test.pass("App Positioned URL properly found") },
 					1
 				);
 				
-				Djsango.navigate("test/position");
+				Djsango.request("test/position");
 				
 				//Now add appless URLs by position
-				Djsango.urlPatterns.add(
+				Djsango.routes.add(
 					/^position/,
 					function(req){ test.fail("App-less URL should not get found!") },
 					2
 				);
-				Djsango.urlPatterns.add(
+				Djsango.routes.add(
 					/^position/,
 					function(req){
 						test.pass("App-less Positioned URL properly found")
 						
 						//GOTO 2   :-)
-						Djsango.navigate("testapp2");
+						Djsango.request("testapp2");
 					},
 					1
 					
 				);
-				Djsango.navigate("position");
+				Djsango.request("position");
 				
 				
 			}]
@@ -88,19 +89,19 @@
 		
 		//LABEL 2
 		var testApp2 = new Djsango("Test App Without Base Pattern");
-		testApp2.urlPatterns.add(
+		testApp2.routes.add(
 			/^testapp2/, function(){
 				test.pass("Successful app url import without base pattern");
 			}
 		);
-		Djsango.urlPatterns.include('', testApp2);
+		Djsango.routes.include('', testApp2);
 		
 		
 		
 		
 		
 		//Problem: what if we want to include witout a prefix?
-		Djsango.urlPatterns.include(/^test/, testApp);
+		Djsango.routes.include(/^test/, testApp);
 		
 		//Error handlers
 		var handleError = function(e){
