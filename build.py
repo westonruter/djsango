@@ -13,8 +13,8 @@ concatenated = """/*!
  * Project URL: http://github.com/westonruter/djsango
  * MIT/GPL license.
  * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
- * Version: 0.1
- * Date: Mon, 19 Apr 2010 06:50:08 +0000
+ * Version: $Version$
+ * Date: $Date$
  */
 """
 
@@ -26,10 +26,10 @@ for script in scripts:
 
 concatenated = concatenated.replace("$Date$", time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
 
-verfile = open("version.txt")
+verfile = open("VERSION")
 concatenated = concatenated.replace("$Version$", verfile.read())
 
-out = open("djsango.js", 'w')
+out = open("djsango.js", 'w+b')
 out.write(concatenated)
 out.close()
 

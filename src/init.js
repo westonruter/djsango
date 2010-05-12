@@ -7,6 +7,8 @@ function Djsango(name, urlPatterns){
 	
 	this.urlPatterns = new Djsango._URLPatternList();
 	this.urlPatterns.app = this;
+	this.urls = this.urlPatterns; //Alias
+	
 	if(urlPatterns){
 		this.urlPatterns.add.apply(this.urlPatterns, urlPatterns);
 	}
@@ -37,18 +39,24 @@ Djsango.prototype.toString = function(){
  */
 Djsango.init = function(initialURL){
 	
-	// Initialize each of the modules (we probably don't need this?)
+	// Initialize each of the modules
 	this._initializers.forEach(function(init){
 		init.apply(this);
 	}, this);
+	this._initializers = []; //Make sure these are only run once
 	
-	//NOW WE NEED TO START
-	this.dispatchEvent('init');
+	// By having an 'init' event handler return false, it allows us to
+	// asynchronously initialize to load content, and then once loaded to run
+	// Djsango.init() again.
+	if(!this.dispatchEvent('init'))
+		return false;
+	
 	if(initialURL)
 		this.navigate(initialURL, true);
 	else
 		this.navigate();
 	
+	return true;
 };
 
 /**

@@ -4,8 +4,8 @@
  * Project URL: http://github.com/westonruter/djsango
  * MIT/GPL license.
  * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
- * Version: 0.1
- * Date: Mon, 19 Apr 2010 06:50:08 +0000
+ * Version: 0.2pre
+ * Date: Tue, 11 May 2010 23:58:17 +0000
  */
 
 
@@ -21,6 +21,8 @@ function Djsango(name, urlPatterns){
 	
 	this.urlPatterns = new Djsango._URLPatternList();
 	this.urlPatterns.app = this;
+	this.urls = this.urlPatterns; //Alias
+	
 	if(urlPatterns){
 		this.urlPatterns.add.apply(this.urlPatterns, urlPatterns);
 	}
@@ -32,7 +34,7 @@ function Djsango(name, urlPatterns){
 	
 	this.dispatchEvent('construct');
 };
-Djsango.version = '0.1';
+Djsango.version = '0.2pre';
 Djsango.toString = function(){
 	return "Djsango";
 };
@@ -51,18 +53,24 @@ Djsango.prototype.toString = function(){
  */
 Djsango.init = function(initialURL){
 	
-	// Initialize each of the modules (we probably don't need this?)
+	// Initialize each of the modules
 	this._initializers.forEach(function(init){
 		init.apply(this);
 	}, this);
+	this._initializers = []; //Make sure these are only run once
 	
-	//NOW WE NEED TO START
-	this.dispatchEvent('init');
+	// By having an 'init' event handler return false, it allows us to
+	// asynchronously initialize to load content, and then once loaded to run
+	// Djsango.init() again.
+	if(!this.dispatchEvent('init'))
+		return false;
+	
 	if(initialURL)
 		this.navigate(initialURL, true);
 	else
 		this.navigate();
 	
+	return true;
 };
 
 /**
@@ -79,7 +87,8 @@ Djsango._initializers = []; //We probably don't need this
 /*!
  * Djsango Events
  *
- * @todo Events need to be dispatched from Djsango, not from the instance: how can the instances listen to 
+ * @todo Events need to be dispatched from Djsango, not from the instance: how can the instances listen to
+ * @todo Can we dispatch events that have asynchronous handlers?
  */
 
 //Djsango._initializers.push(function(){
@@ -117,6 +126,10 @@ Djsango.Event.prototype.preventDefault = function(){
  * Add an a callback for a given event; index indicates the order that the
  * handler should be called. By default it gets called in the order it was
  * added. Return value of a handler overwrites the event.target.
+ * 
+ * @todo implement Djsango.prototype.addEventListener which restrict listener to an app
+ * @todo Can we have an async handler? Will require reorganizing dispatching code
+ * @todo Rename to bind()?
  */
 Djsango.addEventListener = function(type, handler, index){
 	if(!(this._eventListeners[type] instanceof Array))
@@ -127,13 +140,14 @@ Djsango.addEventListener = function(type, handler, index){
 	listeners.splice(index, 0, handler);
 	return listeners.length;
 };
-//TODO: implement Djsango.prototype.addEventListener which restrict listener to an app
 
 
 /**
  * Fire a new event and invoke all of the callbacks with
  * the event type and target passed in. Context is the application.
  * @returns {mixed} The target after potentially being modified by callbacks
+ *
+ * @todo Rename to trigger()?
  */
 Djsango.dispatchEvent = Djsango.prototype.dispatchEvent = function(event, target){
 	if(typeof event == "string"){
@@ -196,16 +210,27 @@ Djsango.dispatchEvent = Djsango.prototype.dispatchEvent = function(event, target
 
 /**
  * Remove a previously assigned event callback
+ * @param type {string} The event name
+ * @param handler {mixed} Either the function to remove or the position
+ * @todo Rename to unbind()?
+ * @todo Djsango.prototype.removeEventListener
  */
-//Djsango.prototype.removeEventListener
 Djsango.removeEventListener = function(type, handler){
 	if(this._eventListeners[type] instanceof Array){
-		var listeners = this._eventListeners[type];
-		for(var i = 0, len = listeners.length; i < len; i++){
-			if(listeners[i] == handler){
-				listeners.splice(i,1);
-				return true;
+		// Look for the provided function and remove it
+		if(handler instanceof Function){
+			var listeners = this._eventListeners[type];
+			for(var i = 0, len = listeners.length; i < len; i++){
+				if(listeners[i] == handler){
+					listeners.splice(i,1);
+					return true;
+				}
 			}
+		}
+		// Remove the handler at the provided position
+		else if(!isNaN(handler) && listeners[handler]){
+			listeners.splice(handler,1);
+			return true;
 		}
 	}
 	return false;
@@ -290,11 +315,11 @@ Djsango._URLPattern = function(pattern, /*app,*/ view){
 Djsango._URLPattern.prototype.toString = function(){
 	return "Djsango._URLPattern<" + this.pattern + ">";
 };
-Djsango._URLPattern.prototype.match = function(url){
-	if(typeof url != "string")
-		throw Error("Expected 'url' to be a string.");
-	return url.match(this.pattern);
-};
+//Djsango._URLPattern.prototype.match = function(url){
+//	if(typeof url != "string")
+//		throw Error("Expected 'url' to be a string.");
+//	return url.match(this.pattern);
+//};
 
 
 /**
@@ -405,17 +430,28 @@ Djsango._URLPatternList.prototype.include = function(basePattern, app, position)
 /**
  * 
  * This needs to return the URLPattern that matched as well as the matches
+ * @todo Should match return an object {matches, app, item}; we don't want to override matches' properties
  */
 Djsango._URLPatternList.prototype.match = function(url){
-	var matches;
+	var result = null;
+	
+	var matches, item;
 	for(var i = 0, len = this.length; i < len; i++){
-		var item = this[i];
+		item = this[i];
 		if(item instanceof Djsango._URLPattern){
-			matches = item.match(url);
+			matches = url.match(item.pattern);
 			if(matches){
-				matches.urlPattern = item;
-				matches.app = this.app;
+				result = {
+					matches: matches,
+					urlPattern: item,
+					app: this.app
+				};
 			}
+			//matches = url.match(item.pattern); //matches = item.match(url);
+			//if(matches){
+			//	matches.urlPattern = item;
+			//	matches.app = this.app;
+			//}
 		}
 		else if(item instanceof Djsango._URLPatternListInclusion){
 			var suburl = url;
@@ -427,20 +463,21 @@ Djsango._URLPatternList.prototype.match = function(url){
 				}
 			}
 			// Ensure that tested URLs never begin with slash
-			if(suburl.substr(0, 1) == '/')
-				suburl = suburl.substr(1);
-			matches = item.app.urlPatterns.match(suburl);
+			//if(suburl.substr(0, 1) == '/')
+			//	suburl = suburl.substr(1);
+			result = item.app.urlPatterns.match(suburl);
 		}
 		else {
 			throw TypeError("Unexpected member in urlPatterns: " + this[i]);
 		}
 		
-		if(matches){
+		if(result){
 			break;
 		}
 	}
 	
-	return matches;
+	//return matches;
+	return result;
 };
 
 
@@ -470,13 +507,15 @@ Djsango._URLPatternList.prototype.match = function(url){
 //});
 
 Djsango.urlPatterns = new Djsango._URLPatternList();
+Djsango.urls = Djsango.urlPatterns; //Alias
 
 /**
  * Request object similar to Django's; instead of GET, POST, REQUEST
  * members being instances of QueryDict, there is only one member `queryDict`
  * that has the GET parameters, as obviously POST isn't possible.
  */
-Djsango._Request = function(url){
+Djsango._Request = function(url, method, data){
+	this.method = method || 'GET';
 	this.url = url;
 	var parsedUrl = url.match(/^(.*?)(?:\?(.*?))?(?:#(.*))?$/);
 	if(!parsedUrl)
@@ -508,6 +547,9 @@ Djsango._Request = function(url){
 			}
 		}
 	}
+	
+	this.data = data || this.queryDict;
+	
 };
 Djsango._Request.prototype.toString = function(){
 	return "Djsango._Request<" + this.url + ">";
@@ -521,20 +563,6 @@ Djsango._Response = function(){
 
 
 
-
-//Djsango._Request.prototype.path = null;
-//Djsango._Request.prototype.query = null;
-//Djsango._Request.prototype.fragment = null;
-//Djsango._Request.prototype.toString = function(){
-//	return this.raw;
-//	//var url = this.path;
-//	//if(this.query)
-//	//	url += "?" + this.query;
-//	//if(this.fragment)
-//	//	url += "?" + this.fragment;
-//	//return url;
-//};
-
 Djsango._previousURL = null;
 
 /**
@@ -543,8 +571,12 @@ Djsango._previousURL = null;
  * to the newly provided hash.
  * @returns {boolean} True if navigation succeeded: event handlers
  *                    didn't prevent and a URL matched.
+ * @todo We need a way to emulate POST/PUT/DELETE requests.
+ * @todo Replace this with Djsango.request()? And Djsango.get()?
  */
-Djsango.navigate = function(url, replace){
+Djsango.navigate = function(url, replace, method, data){
+	method = method ? method.toUpperCase() : 'GET';
+	
 	var context = this;
 	var existingHash = window.location.hash.replace(/^#/, '');
 	
@@ -557,8 +589,8 @@ Djsango.navigate = function(url, replace){
 	// If can't discern the URL, then just use empty string
 	if(!url)
 		url = '';
-	if(url)
-		url = url.replace(/^\//, '');
+	//if(url)
+	//	url = url.replace(/^\//, '');
 	
 	// Fire navigate event so that plugins can modify the hash or
 	// abort the navigation completely
@@ -579,29 +611,31 @@ Djsango.navigate = function(url, replace){
 			window.location.href = newLocationHash;
 	}
 	
-	var request = new Djsango._Request(url);
+	//TODO: Put this above for a new 'request' event replacing 'navigate'
+	var request = new Djsango._Request(url, method, data);
 	
 	//NOTE: In order for this to work, the app needs to be tied to the view; currying?
 	
 	
-	var matches = this.urlPatterns.match(request.path);
-	if(matches){
-		if(!(matches.urlPattern instanceof Djsango._URLPattern))
+	var matchResult = this.urlPatterns.match(request.path);
+	if(matchResult){
+		if(!(matchResult.urlPattern instanceof Djsango._URLPattern))
 			throw TypeError("Assertion fail");
+		request.match = matchResult;
 		
-		var pattern = matches.urlPattern.pattern;
-		var view = matches.urlPattern.view;
+		//var pattern = matchResult.urlPattern.pattern;
+		//var view = matchResult.urlPattern.view;
 		
 		// Update the context for the view and events
-		if(matches.app){
-			context = matches.app;
+		if(matchResult.app){
+			context = matchResult.app;
 		}
 		
 		var event = new Djsango.Event('url_success', url);
 		event.request = request;
-		event.matches = matches;
-		event.pattern = pattern;
-		event.view = view;
+		//event.matches = matchResult;
+		//event.pattern = pattern;
+		//event.view = view;
 		if(!context.dispatchEvent(event))
 			return false;
 		
@@ -609,17 +643,17 @@ Djsango.navigate = function(url, replace){
 		var viewSuccess;
 		try {
 			// Dispatch the view
-			var args = matches;
-			args[0] = request;
-			result = matches.urlPattern.view.apply(context, args);
+			var args = matchResult.matches;
+			args[0] = request; //replace the entire string match with the request object
+			result = matchResult.urlPattern.view.apply(context, args);
 			viewSuccess = true;
 			
 			// Fire view success event
 			event = new Djsango.Event('view_success', result);
 			event.request = request;
-			event.matches = matches;
-			event.pattern = pattern;
-			event.view = view;
+			//event.matches = matches;
+			//event.pattern = pattern;
+			//event.view = view;
 			context.dispatchEvent(event);
 		}
 		catch(error){
@@ -629,18 +663,18 @@ Djsango.navigate = function(url, replace){
 			// Fire view error event
 			event = new Djsango.Event('view_error', error);
 			event.request = request;
-			event.matches = matches;
-			event.pattern = pattern;
-			event.view = view;
+			//event.matches = matches;
+			//event.pattern = pattern;
+			//event.view = view;
 			context.dispatchEvent(event);
 		}
 		
 		// Fire view complete event
 		event = new Djsango.Event('view_complete', result);
 		event.request = request;
-		event.matches = matches;
-		event.pattern = pattern;
-		event.view = view;
+		//event.matches = matches;
+		//event.pattern = pattern;
+		//event.view = view;
 		event.success = viewSuccess;
 		context.dispatchEvent(event);
 		

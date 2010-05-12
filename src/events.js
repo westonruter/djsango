@@ -1,7 +1,8 @@
 /*!
  * Djsango Events
  *
- * @todo Events need to be dispatched from Djsango, not from the instance: how can the instances listen to 
+ * @todo Events need to be dispatched from Djsango, not from the instance: how can the instances listen to
+ * @todo Can we dispatch events that have asynchronous handlers?
  */
 
 //Djsango._initializers.push(function(){
@@ -39,6 +40,10 @@ Djsango.Event.prototype.preventDefault = function(){
  * Add an a callback for a given event; index indicates the order that the
  * handler should be called. By default it gets called in the order it was
  * added. Return value of a handler overwrites the event.target.
+ * 
+ * @todo implement Djsango.prototype.addEventListener which restrict listener to an app
+ * @todo Can we have an async handler? Will require reorganizing dispatching code
+ * @todo Rename to bind()?
  */
 Djsango.addEventListener = function(type, handler, index){
 	if(!(this._eventListeners[type] instanceof Array))
@@ -49,13 +54,14 @@ Djsango.addEventListener = function(type, handler, index){
 	listeners.splice(index, 0, handler);
 	return listeners.length;
 };
-//TODO: implement Djsango.prototype.addEventListener which restrict listener to an app
 
 
 /**
  * Fire a new event and invoke all of the callbacks with
  * the event type and target passed in. Context is the application.
  * @returns {mixed} The target after potentially being modified by callbacks
+ *
+ * @todo Rename to trigger()?
  */
 Djsango.dispatchEvent = Djsango.prototype.dispatchEvent = function(event, target){
 	if(typeof event == "string"){
@@ -118,16 +124,27 @@ Djsango.dispatchEvent = Djsango.prototype.dispatchEvent = function(event, target
 
 /**
  * Remove a previously assigned event callback
+ * @param type {string} The event name
+ * @param handler {mixed} Either the function to remove or the position
+ * @todo Rename to unbind()?
+ * @todo Djsango.prototype.removeEventListener
  */
-//Djsango.prototype.removeEventListener
 Djsango.removeEventListener = function(type, handler){
 	if(this._eventListeners[type] instanceof Array){
-		var listeners = this._eventListeners[type];
-		for(var i = 0, len = listeners.length; i < len; i++){
-			if(listeners[i] == handler){
-				listeners.splice(i,1);
-				return true;
+		// Look for the provided function and remove it
+		if(handler instanceof Function){
+			var listeners = this._eventListeners[type];
+			for(var i = 0, len = listeners.length; i < len; i++){
+				if(listeners[i] == handler){
+					listeners.splice(i,1);
+					return true;
+				}
 			}
+		}
+		// Remove the handler at the provided position
+		else if(!isNaN(handler) && listeners[handler]){
+			listeners.splice(handler,1);
+			return true;
 		}
 	}
 	return false;

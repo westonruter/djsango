@@ -221,8 +221,8 @@ Djsango._URLPatternList.prototype.match = function(url){
 				}
 			}
 			// Ensure that tested URLs never begin with slash
-			if(suburl.substr(0, 1) == '/')
-				suburl = suburl.substr(1);
+			//if(suburl.substr(0, 1) == '/')
+			//	suburl = suburl.substr(1);
 			result = item.app.urlPatterns.match(suburl);
 		}
 		else {
@@ -265,13 +265,15 @@ Djsango._URLPatternList.prototype.match = function(url){
 //});
 
 Djsango.urlPatterns = new Djsango._URLPatternList();
+Djsango.urls = Djsango.urlPatterns; //Alias
 
 /**
  * Request object similar to Django's; instead of GET, POST, REQUEST
  * members being instances of QueryDict, there is only one member `queryDict`
  * that has the GET parameters, as obviously POST isn't possible.
  */
-Djsango._Request = function(url){
+Djsango._Request = function(url, method, data){
+	this.method = method || 'GET';
 	this.url = url;
 	var parsedUrl = url.match(/^(.*?)(?:\?(.*?))?(?:#(.*))?$/);
 	if(!parsedUrl)
@@ -303,6 +305,9 @@ Djsango._Request = function(url){
 			}
 		}
 	}
+	
+	this.data = data || this.queryDict;
+	
 };
 Djsango._Request.prototype.toString = function(){
 	return "Djsango._Request<" + this.url + ">";
@@ -316,20 +321,6 @@ Djsango._Response = function(){
 
 
 
-
-//Djsango._Request.prototype.path = null;
-//Djsango._Request.prototype.query = null;
-//Djsango._Request.prototype.fragment = null;
-//Djsango._Request.prototype.toString = function(){
-//	return this.raw;
-//	//var url = this.path;
-//	//if(this.query)
-//	//	url += "?" + this.query;
-//	//if(this.fragment)
-//	//	url += "?" + this.fragment;
-//	//return url;
-//};
-
 Djsango._previousURL = null;
 
 /**
@@ -338,8 +329,12 @@ Djsango._previousURL = null;
  * to the newly provided hash.
  * @returns {boolean} True if navigation succeeded: event handlers
  *                    didn't prevent and a URL matched.
+ * @todo We need a way to emulate POST/PUT/DELETE requests.
+ * @todo Replace this with Djsango.request()? And Djsango.get()?
  */
-Djsango.navigate = function(url, replace){
+Djsango.navigate = function(url, replace, method, data){
+	method = method ? method.toUpperCase() : 'GET';
+	
 	var context = this;
 	var existingHash = window.location.hash.replace(/^#/, '');
 	
@@ -352,8 +347,8 @@ Djsango.navigate = function(url, replace){
 	// If can't discern the URL, then just use empty string
 	if(!url)
 		url = '';
-	if(url)
-		url = url.replace(/^\//, '');
+	//if(url)
+	//	url = url.replace(/^\//, '');
 	
 	// Fire navigate event so that plugins can modify the hash or
 	// abort the navigation completely
@@ -374,7 +369,8 @@ Djsango.navigate = function(url, replace){
 			window.location.href = newLocationHash;
 	}
 	
-	var request = new Djsango._Request(url);
+	//TODO: Put this above for a new 'request' event replacing 'navigate'
+	var request = new Djsango._Request(url, method, data);
 	
 	//NOTE: In order for this to work, the app needs to be tied to the view; currying?
 	
