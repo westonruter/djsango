@@ -5,7 +5,7 @@
  * MIT/GPL license.
  * Developed at Shepherd Interactive <http://shepherdinteractive.com/>
  * Version: 0.2pre
- * Date: Wed, 12 May 2010 19:28:27 +0000
+ * Date: Thu, 13 May 2010 00:17:24 +0000
  */
 
 
@@ -65,11 +65,10 @@ Djsango.init = function(initialURL){
 	if(!this.dispatchEvent('init'))
 		return false;
 	
-	console.info(Djsango.request)
-	//if(initialURL)
-	//	Djsango.request(initialURL);
-	//else
-	//	Djsango.request();
+	if(initialURL)
+		this.request(initialURL);
+	else
+		this.request();
 	
 	return true;
 };
@@ -111,7 +110,11 @@ Djsango.Event = function(type, target){
 	this.defaultPrevented = false;
 };
 Djsango.Event.prototype.toString = function(){
-	return "Djsango.Event<" + this.type + ">( " + this.target.toString() + " )";
+	var str = "Djsango.Event<" + this.type + ">";
+	if(this.target){
+		str += "( " + this.target.toString() + " )";
+	}
+	return str;
 };
 
 
@@ -558,6 +561,7 @@ Djsango.Request = function(/*...*/){
 		this.data = args.data || null;
 		this.redirect = !!args.redirect;
 	}
+	this.method = this.method.toUpperCase();
 	
 	var parsedUrl = this.url.match(/^(.*?)(?:\?(.*?))?(?:#(.*))?$/);
 	if(!parsedUrl)
@@ -753,10 +757,6 @@ Djsango.post = function(url, data){
 	});
 };
 
-
-Djsango.request_ = function(){
-	alert('food');
-}
 
 /**
  * Load the view associated with the hash supplied; if empty, the

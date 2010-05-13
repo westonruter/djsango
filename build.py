@@ -25,10 +25,10 @@ for script in scripts:
     concatenated += "\n\n\n// File: %s ---------------------------------------------------------------\n\n" % script
     concatenated += f.read()
 
-concatenated = concatenated.sub("$Date$", time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
+concatenated = concatenated.replace("$Date$", time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
 
 verfile = open("VERSION")
-concatenated = concatenated.sub("$Version$", verfile.read())
+concatenated = concatenated.replace("$Version$", verfile.read())
 
 out = open("djsango.js", 'w+b')
 out.write(concatenated)
