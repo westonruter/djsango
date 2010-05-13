@@ -73,6 +73,9 @@ Djsango.Request = function(/*...*/){
 Djsango.Request.prototype.toString = function(){
 	return "Djsango.Request<" + this.method + " " + this.url + ">";
 };
+
+Djsango.currentURL = null;
+
 Djsango.Request.prototype.send = function(){
 	//console.warn('send ' + this.url)
 	//method = method ? method.toUpperCase() : 'GET';
@@ -105,14 +108,20 @@ Djsango.Request.prototype.send = function(){
 	//url = event.target;
 	Djsango._previousRequest = this;
 	
+	// Don't do anything if it's a GET request and we're already there
+	if(this.method == 'GET' && Djsango.currentURL == this.url){
+		return false;
+	}
+	
 	// Update window location if url isn't the existing one
 	var newLocationHash = '#' + Djsango.fragmentSigil + this.url;
-	if(/*arguments.length &&*/ newLocationHash != window.location.hash){
+	Djsango.currentURL = this.url;
+	if(/*arguments.length &&*/ newLocationHash != self.location.hash){
 		Djsango._onhashchange.suppressCount++;
 		if(this.redirect)
-			window.location.replace(newLocationHash);
+			self.location.replace(newLocationHash);
 		else
-			window.location.href = newLocationHash;
+			self.location.href = newLocationHash;
 	}
 	
 	//TODO: Put this above for a new 'request' event replacing 'navigate'
@@ -127,10 +136,10 @@ Djsango.Request.prototype.send = function(){
 	
 	var matchedRoute = Djsango.routes.match(this.path);
 	if(matchedRoute){
-		if(!(matchedRoute instanceof Djsango.Route))
-			throw TypeError("Assertion fail");
+		//if(!(matchedRoute instanceof Djsango.Route))
+		//	throw TypeError("Assertion fail");
 		
-		this.route = matchedRoute; //This sucks. TODO
+		this.route = matchedRoute;
 		
 		//var pattern = matchResult.urlPattern.pattern;
 		//var view = matchResult.urlPattern.view;
@@ -208,7 +217,7 @@ Djsango._Response = function(){
 Djsango._previousURL = null; //DEPRECATED
 Djsango._previousRequest = null;
 
-
+//TODO: These shortcuts aren't fully baked.
 Djsango.get = function(url, redirect){
 	Djsango.request({
 		url:url,
@@ -220,8 +229,8 @@ Djsango.get = function(url, redirect){
 Djsango.post = function(url, data){
 	Djsango.request({
 		url:url,
-		redirect:redirect,
-		method: 'GET',
+		redirect:false,
+		method: 'POST',
 		data:data
 	});
 };
@@ -237,127 +246,6 @@ Djsango.post = function(url, data){
  * @todo Replace this with Djsango.request()? And Djsango.get()?
  */
 Djsango.request = function(url, method, data, redirect){
-	
 	var request = new Djsango.Request(url, method, data, redirect);
 	return request.send();
-	
-	//method = method ? method.toUpperCase() : 'GET';
-	//
-	//var context = this;
-	//var existingHash = window.location.hash.replace(/^#/, '');
-	//
-	//// Get existing url and use it if no argument url provided; strip out Ajax hash shebang (fragment sigil)
-	//if(url === undefined && existingHash.substr(0, Djsango.fragmentSigil.length) == Djsango.fragmentSigil){
-	//	//var wasURL = url;
-	//	url = existingHash.substr(Djsango.fragmentSigil.length);
-	//}
-	//
-	//// If can't discern the URL, then just use empty string
-	//if(!url)
-	//	url = '';
-	//
-	//// If a GET request and data is provided, append to URL
-	//if(method == 'GET' && data){
-	//	//TODO
-	//	//If string, just urlencode it; if object, then serialize it
-	//}
-	//
-	//// Fire navigate event so that plugins can modify the hash or
-	//// abort the navigation completely
-	//var event = new Djsango.Event('navigate', url);
-	//event.previousTarget = Djsango._previousURL;
-	//if(!this.dispatchEvent(event))
-	//	return false;
-	//url = event.target;
-	//Djsango._previousURL = url;
-	//
-	//// Update window location if url isn't the existing one
-	//var newLocationHash = '#' + Djsango.fragmentSigil + url;
-	//if(arguments.length && newLocationHash != window.location.hash){
-	//	Djsango._onhashchange.suppressCount++;
-	//	if(replace)
-	//		window.location.replace(newLocationHash);
-	//	else
-	//		window.location.href = newLocationHash;
-	//}
-	//
-	////TODO: Put this above for a new 'request' event replacing 'navigate'
-	//var request = new Djsango.Request(url, method, data);
-	//
-	////NOTE: In order for this to work, the app needs to be tied to the view; currying?
-	//
-	//
-	//var matchResult = this.routes.match(request.path);
-	//if(matchResult){
-	//	if(!(matchResult.urlPattern instanceof Djsango.Route))
-	//		throw TypeError("Assertion fail");
-	//	request.match = matchResult;
-	//	
-	//	//var pattern = matchResult.urlPattern.pattern;
-	//	//var view = matchResult.urlPattern.view;
-	//	
-	//	// Update the context for the view and events
-	//	if(matchResult.app){
-	//		context = matchResult.app;
-	//	}
-	//	
-	//	var event = new Djsango.Event('url_success', url);
-	//	event.request = request;
-	//	//event.matches = matchResult;
-	//	//event.pattern = pattern;
-	//	//event.view = view;
-	//	if(!context.dispatchEvent(event))
-	//		return false;
-	//	
-	//	var result;
-	//	var viewSuccess;
-	//	try {
-	//		// Dispatch the view
-	//		var args = matchResult.matches;
-	//		args[0] = request; //replace the entire string match with the request object
-	//		result = matchResult.urlPattern.view.apply(context, args);
-	//		viewSuccess = true;
-	//		
-	//		// Fire view success event
-	//		event = new Djsango.Event('view_success', result);
-	//		event.request = request;
-	//		//event.matches = matches;
-	//		//event.pattern = pattern;
-	//		//event.view = view;
-	//		context.dispatchEvent(event);
-	//	}
-	//	catch(error){
-	//		result = error;
-	//		viewSuccess = false;
-	//		
-	//		// Fire view error event
-	//		event = new Djsango.Event('view_error', error);
-	//		event.request = request;
-	//		//event.matches = matches;
-	//		//event.pattern = pattern;
-	//		//event.view = view;
-	//		context.dispatchEvent(event);
-	//	}
-	//	
-	//	// Fire view complete event
-	//	event = new Djsango.Event('view_complete', result);
-	//	event.request = request;
-	//	//event.matches = matches;
-	//	//event.pattern = pattern;
-	//	//event.view = view;
-	//	event.success = viewSuccess;
-	//	context.dispatchEvent(event);
-	//	
-	//	return true; //return !(result instanceof Error);
-	//}
-	//else {
-	//	var event = new Djsango.Event('url_fail', url);
-	//	context.dispatchEvent(event);
-	//}
-	//return false;
 };
-
-
-
-
-//TODO: Djsango.watchLocation(); Djsango.unwatchLocation();	
