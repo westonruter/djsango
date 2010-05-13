@@ -24,7 +24,11 @@ Djsango.Event = function(type, target){
 	this.defaultPrevented = false;
 };
 Djsango.Event.prototype.toString = function(){
-	return "Djsango.Event<" + this.type + ">( " + this.target.toString() + " )";
+	var str = "Djsango.Event<" + this.type + ">";
+	if(this.target){
+		str += "( " + this.target.toString() + " )";
+	}
+	return str;
 };
 
 
